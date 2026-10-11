@@ -1,0 +1,1438 @@
+<title>LernFreund</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Seitenleiste mit Fach/Thema links, Arbeitsbereich mit Tabs rechts; auf dem Handy untereinander.
+   Farben: Wandtafel-Grün als Akzent, Kreide-Gelb als Highlight, leicht grünstichige Neutraltöne. */
+:root {
+  --bg: #f3f5f2;
+  --surface: #ffffff;
+  --surface-2: #e9eee9;
+  --text: #17231e;
+  --muted: #5d6b64;
+  --border: #d8e0da;
+  --primary: #1f6f5c;
+  --primary-soft: #dcefe8;
+  --on-primary: #ffffff;
+  --chalk: #f2c94c;
+  --success: #1f8a4c;
+  --success-soft: #dcf3e4;
+  --danger: #c4413a;
+  --danger-soft: #f9e1df;
+  --warn: #b7791f;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(20, 50, 40, 0.06);
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101814; --surface: #17221d; --surface-2: #213029; --text: #e8f0ec; --muted: #9bb0a6;
+    --border: #2b3c34; --primary: #5cc4a6; --primary-soft: #1f3a32; --on-primary: #0d1a15; --chalk: #f2c94c;
+    --success: #4cc98a; --success-soft: #1b3a2a; --danger: #f07a72; --danger-soft: #45231f; --warn: #e0a84a; --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101814; --surface: #17221d; --surface-2: #213029; --text: #e8f0ec; --muted: #9bb0a6;
+  --border: #2b3c34; --primary: #5cc4a6; --primary-soft: #1f3a32; --on-primary: #0d1a15; --chalk: #f2c94c;
+  --success: #4cc98a; --success-soft: #1b3a2a; --danger: #f07a72; --danger-soft: #45231f; --warn: #e0a84a; --shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+h1, h2, h3, .brand, .score-big, .timer-display, .stat .v, .countdown strong { font-family: var(--font-display); }
+h2 { font-size: 1.1rem; margin: 0 0 12px; text-wrap: balance; }
+h3 { font-size: 1rem; margin: 0 0 6px; }
+label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+input, select, textarea {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); color: var(--text); font: inherit;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+textarea { resize: vertical; }
+.hidden, [hidden] { display: none !important; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.center { text-align: center; justify-content: center; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+}
+.brand { font-weight: 800; font-size: 1.2rem; }
+.brand span { color: var(--primary); }
+.brand .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--chalk); margin-right: 6px; }
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+.streak { background: var(--surface-2); padding: 4px 10px; border-radius: 999px; font-weight: 700; }
+.icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 20px; padding: 20px; max-width: 1300px; margin: 0 auto; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; padding: 12px 16px; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.content { min-width: 0; }
+
+.btn {
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); padding: 9px 14px;
+  border-radius: 10px; cursor: pointer; font: inherit; font-weight: 600;
+}
+.btn:hover { filter: brightness(0.97); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.btn.ghost { background: none; border-color: transparent; color: var(--muted); }
+.btn.small { padding: 4px 10px; font-size: 0.85rem; }
+.btn.full { width: 100%; margin-top: 14px; }
+.btn.success { background: var(--success); border-color: var(--success); color: var(--on-primary); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--on-primary); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row-end { display: flex; justify-content: flex-end; }
+
+.subjects { display: flex; flex-wrap: wrap; gap: 6px; }
+.subjects button, .modes button, .tabs button, .timer-modes button {
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); border-radius: 999px;
+  padding: 5px 11px; cursor: pointer; font: inherit; font-size: 0.85rem;
+}
+.subjects button.active, .modes button.active, .timer-modes button.active { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+#customSubject { margin-top: 8px; }
+
+.topic-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.topic-list li {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+}
+.topic-list li:hover { background: var(--surface-2); }
+.topic-list li.active { background: var(--primary-soft); border-color: var(--primary); }
+.topic-list .t-sub { font-size: 0.75rem; color: var(--muted); }
+.topic-list .del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+
+.active-topic { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
+.active-topic .subject-badge { display: inline-block; background: var(--primary-soft); color: var(--primary); font-weight: 700; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; }
+.active-topic h1 { font-size: 1.3rem; margin: 4px 0 0; }
+.countdown { text-align: right; }
+.countdown strong { font-size: 1.6rem; color: var(--primary); display: block; line-height: 1.1; }
+
+.tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 4px; }
+.tabs button { white-space: nowrap; padding: 8px 14px; font-size: 0.9rem; }
+.tabs button.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.stat .v { font-size: 1.6rem; font-weight: 800; }
+.stat .l { color: var(--muted); font-size: 0.85rem; }
+
+.week-chart { display: flex; align-items: flex-end; gap: 10px; height: 140px; }
+.week-chart .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.week-chart .bar { width: 100%; max-width: 42px; background: var(--primary); border-radius: 6px 6px 2px 2px; min-height: 3px; }
+.week-chart .bl { font-size: 0.75rem; color: var(--muted); }
+.week-chart .bv { font-size: 0.7rem; color: var(--muted); }
+
+/* Chat */
+.chat-card { display: flex; flex-direction: column; }
+.modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chat { min-height: 300px; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; background: var(--primary); color: var(--on-primary); border-bottom-right-radius: 4px; white-space: pre-wrap; }
+.msg.assistant { align-self: flex-start; background: var(--surface-2); border-bottom-left-radius: 4px; }
+.msg.assistant p { margin: 0 0 8px; }
+.msg.assistant p:last-child { margin-bottom: 0; }
+.msg.assistant ul, .msg.assistant ol { margin: 4px 0 8px; padding-left: 20px; }
+.msg.assistant code { background: var(--surface); padding: 1px 5px; border-radius: 5px; }
+.msg.assistant h3, .msg.assistant h4 { margin: 8px 0 4px; }
+.typing::after { content: "▍"; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px; }
+.quick button { border: 1px dashed var(--border); background: none; color: var(--muted); border-radius: 999px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 0.82rem; }
+.quick button:hover { color: var(--primary); border-color: var(--primary); }
+.chat-input { display: flex; gap: 8px; align-items: flex-end; }
+.empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+
+/* Formulare */
+.grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; align-items: end; }
+.grid-form .span2 { grid-column: span 2; }
+.grid-form .btn { margin-top: 14px; }
+@media (max-width: 520px) { .grid-form { grid-template-columns: 1fr; } .grid-form .span2 { grid-column: span 1; } }
+
+/* Lernplan */
+.progress { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: 8px 0; }
+.progress > div { height: 100%; background: var(--success); transition: width 0.3s; }
+.plan-day { border-left: 4px solid var(--border); }
+.plan-day.today { border-left-color: var(--primary); }
+.plan-day.done { border-left-color: var(--success); opacity: 0.8; }
+.plan-day.past:not(.done) { border-left-color: var(--warn); }
+.plan-day header { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.plan-day .date { font-size: 0.8rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.pill { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); margin-left: 4px; }
+.task { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; cursor: pointer; }
+.task input { width: auto; margin-top: 4px; }
+.task.checked span { text-decoration: line-through; color: var(--muted); }
+.tips li { margin-bottom: 4px; }
+
+/* Quiz */
+.q-options { display: grid; gap: 8px; margin-top: 10px; }
+.q-option { text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 10px 12px; border-radius: 10px; cursor: pointer; font: inherit; }
+.q-option:hover:not(:disabled) { border-color: var(--primary); }
+.q-option.correct { background: var(--success-soft); border-color: var(--success); }
+.q-option.wrong { background: var(--danger-soft); border-color: var(--danger); }
+.q-explain { margin-top: 10px; padding: 10px; background: var(--surface-2); border-radius: 10px; font-size: 0.92rem; }
+.score-big { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
+
+/* Karteikarten */
+.flashcard { perspective: 1000px; height: 220px; cursor: pointer; margin-bottom: 12px; }
+.flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s; transform-style: preserve-3d; }
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-face {
+  position: absolute; inset: 0; backface-visibility: hidden; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface);
+  font-size: 1.15rem; overflow-y: auto; box-shadow: var(--shadow);
+}
+.flashcard-face.back { transform: rotateY(180deg); background: var(--primary-soft); font-size: 1rem; }
+.boxes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+/* Timer */
+.timer-card { text-align: center; }
+.timer-modes { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.timer-display { font-size: 4.5rem; font-weight: 800; font-variant-numeric: tabular-nums; margin: 16px 0; }
+
+/* Noten */
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.good { color: var(--success); font-weight: 700; }
+.bad { color: var(--danger); font-weight: 700; }
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 10px 18px; border-radius: 999px; z-index: 20; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-width: calc(100% - 32px);
+}
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: -3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.timer-display, .stat .v, .countdown strong { font-variant-numeric: tabular-nums; }
+.brand-sub { font-size: 0.8rem; color: var(--muted); font-weight: 500; margin-left: 6px; }
+.notice { background: var(--primary-soft); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+.steps { display: grid; gap: 8px; margin: 10px 0 0; padding-left: 20px; }
+.card-form { display: grid; gap: 8px; margin-top: 12px; }
+.dialog-backdrop { position: fixed; inset: 0; background: rgba(10, 20, 15, 0.45); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
+.dialog { background: var(--surface); color: var(--text); border-radius: var(--radius); padding: 20px; max-width: 380px; width: 100%; display: grid; gap: 16px; }
+.dialog .row { justify-content: flex-end; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+<header class="topbar">
+    <div class="brand"><span class="dot"></span>Lern<span>Freund</span><span class="brand-sub">mit Coach Lumi</span></div>
+    <div class="topbar-right">
+      <span class="streak" id="streak" title="Lern-Serie: Tage in Folge gelernt">🔥 0</span>
+      <button class="icon-btn" id="themeToggle" title="Hell/Dunkel umschalten">🌓</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Seitenleiste: Fach & Thema wählen -->
+    <aside class="sidebar">
+      <section class="card">
+        <h2>Neues Thema</h2>
+        <form id="topicForm">
+          <label>Fach</label>
+          <div class="subjects" id="subjects"></div>
+          <input id="customSubject" class="hidden" placeholder="Eigenes Fach eingeben">
+          <label for="topicInput">Thema</label>
+          <input id="topicInput" required placeholder="z.B. Quadratische Gleichungen">
+          <label for="levelInput">Wie gut kannst du es schon?</label>
+          <select id="levelInput">
+            <option>Ich fange bei null an</option>
+            <option selected>Ich kenne die Grundlagen</option>
+            <option>Ich kann es schon recht gut</option>
+          </select>
+          <label for="examInput">Prüfungsdatum (optional)</label>
+          <input id="examInput" type="date">
+          <label for="goalInput">Notizen für den Coach (optional)</label>
+          <textarea id="goalInput" rows="2" placeholder="z.B. Ich verstehe die Mitternachtsformel nicht"></textarea>
+          <button class="btn primary full" type="submit">✨ Thema dem Coach geben</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Meine Themen</h2>
+        <ul class="topic-list" id="topicList"></ul>
+      </section>
+    </aside>
+
+    <!-- Hauptbereich -->
+    <section class="content">
+      <div class="active-topic card" id="activeTopic"></div>
+
+      <nav class="tabs" id="tabs">
+        <button data-tab="overview" class="active">🏠 Übersicht</button>
+        <button data-tab="coach">🤖 Coach</button>
+        <button data-tab="plan">🗓️ Lernplan</button>
+        <button data-tab="quiz">❓ Quiz</button>
+        <button data-tab="cards">🃏 Karteikarten</button>
+        <button data-tab="timer">⏱️ Timer</button>
+        <button data-tab="grades">📊 Noten</button>
+      </nav>
+
+      <!-- Übersicht -->
+      <div class="tab-panel" id="tab-overview">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="card">
+          <h2>Heute zu tun</h2>
+          <div id="todayTasks"></div>
+        </div>
+        <div class="card">
+          <h2>Anstehende Prüfungen</h2>
+          <div id="upcomingExams"></div>
+        </div>
+        <div class="card">
+          <h2>Lernzeit der letzten 7 Tage</h2>
+          <div class="week-chart" id="weekChart"></div>
+        </div>
+      </div>
+
+      <!-- Coach-Chat -->
+      <div class="tab-panel hidden" id="tab-coach">
+        <div class="card chat-card">
+          <div class="modes" id="modes">
+            <button data-mode="erklaeren" class="active" title="Thema Schritt für Schritt erklärt bekommen">💡 Erklären</button>
+            <button data-mode="ueben" title="Übungsaufgaben lösen">✏️ Üben</button>
+            <button data-mode="pruefen" title="Wie in einer echten Prüfung">📝 Prüfung</button>
+            <button data-mode="zusammenfassen" title="Kompakte Zusammenfassung">📄 Zusammenfassung</button>
+            <button data-mode="feynman" title="Erkläre es in eigenen Worten">🧠 Feynman</button>
+          </div>
+          <div class="chat" id="chat"></div>
+          <div class="quick" id="quickPrompts"></div>
+          <form class="chat-input" id="chatForm">
+            <textarea id="chatInput" rows="2" placeholder="Frag deinen Coach etwas… (Enter = senden, Shift+Enter = neue Zeile)"></textarea>
+            <button class="btn" type="button" id="stopBtn" hidden>Stopp</button>
+            <button class="btn primary" type="submit" id="sendBtn">Senden</button>
+          </form>
+          <div class="row-end"><button class="btn ghost small" id="clearChat">🗑️ Chat leeren</button></div>
+        </div>
+      </div>
+
+      <!-- Lernplan -->
+      <div class="tab-panel hidden" id="tab-plan">
+        <div class="card">
+          <h2>Lernplan erstellen</h2>
+          <form id="planForm" class="grid-form">
+            <div><label for="planExam">Prüfungsdatum</label><input id="planExam" type="date" required></div>
+            <div><label for="planMinutes">Minuten pro Tag</label>
+              <select id="planMinutes"><option>15</option><option selected>30</option><option>45</option><option>60</option><option>90</option></select></div>
+            <div><label for="planDays">Lerntage pro Woche</label>
+              <select id="planDays"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select></div>
+            <div class="span2"><label for="planBusy">Besondere Tage (optional)</label>
+              <input id="planBusy" placeholder="z.B. Mittwoch Training, Samstag frei"></div>
+            <button class="btn primary span2" type="submit" id="planBtn">🗓️ Plan vom Coach erstellen lassen</button>
+          </form>
+        </div>
+        <div id="planView"></div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="tab-panel hidden" id="tab-quiz">
+        <div class="card">
+          <h2>Teste dein Wissen</h2>
+          <form id="quizForm" class="grid-form">
+            <div><label for="quizCount">Anzahl Fragen</label>
+              <select id="quizCount"><option>5</option><option selected>8</option><option>10</option></select></div>
+            <div><label for="quizDiff">Schwierigkeit</label>
+              <select id="quizDiff"><option>leicht</option><option selected>mittel</option><option>schwer</option></select></div>
+            <button class="btn primary span2" type="submit" id="quizBtn">❓ Neues Quiz starten</button>
+          </form>
+        </div>
+        <div id="quizView"></div>
+      </div>
+
+      <!-- Karteikarten -->
+      <div class="tab-panel hidden" id="tab-cards">
+        <div class="card">
+          <h2>Karteikarten</h2>
+          <p class="muted">Der Coach erstellt Karten. Karten, die du nicht wusstest, kommen öfter dran.</p>
+          <div class="row">
+            <button class="btn primary" id="cardsBtn">🃏 Karten erstellen lassen</button>
+            <button class="btn" id="addCardBtn">➕ Eigene Karte</button>
+          </div>
+          <form class="card-form" id="cardForm" hidden>
+            <label for="cardFront">Vorderseite (Begriff oder Frage)</label>
+            <input id="cardFront" placeholder="z.B. Nenner">
+            <label for="cardBack">Rückseite (Antwort)</label>
+            <textarea id="cardBack" rows="2" placeholder="z.B. Die Zahl unter dem Bruchstrich"></textarea>
+            <button class="btn primary" type="submit">Karte speichern</button>
+          </form>
+        </div>
+        <div id="cardsView"></div>
+      </div>
+
+      <!-- Timer -->
+      <div class="tab-panel hidden" id="tab-timer">
+        <div class="card timer-card">
+          <h2>Pomodoro-Timer</h2>
+          <p class="muted">Konzentriert lernen, dann kurz Pause. Deine Lernzeit wird automatisch gezählt.</p>
+          <div class="timer-modes" id="timerModes">
+            <button data-min="25" class="active">Lernen 25</button>
+            <button data-min="50">Lernen 50</button>
+            <button data-min="5" data-break="1">Pause 5</button>
+            <button data-min="15" data-break="1">Pause 15</button>
+          </div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="row center">
+            <button class="btn primary" id="timerStart">▶️ Start</button>
+            <button class="btn" id="timerReset">↺ Zurücksetzen</button>
+          </div>
+          <p class="muted center" id="timerInfo"></p>
+        </div>
+      </div>
+
+      <!-- Noten -->
+      <div class="tab-panel hidden" id="tab-grades">
+        <div class="card">
+          <h2>Notenrechner</h2>
+          <form id="gradeForm" class="grid-form">
+            <div><label for="gradeSubject">Fach</label><select id="gradeSubject"></select></div>
+            <div><label for="gradeValue">Note (1–6)</label><input id="gradeValue" type="number" min="1" max="6" step="0.25" required></div>
+            <div><label for="gradeWeight">Gewichtung</label>
+              <select id="gradeWeight"><option value="1">einfach</option><option value="0.5">halb</option><option value="2">doppelt</option></select></div>
+            <div><label for="gradeLabel">Bezeichnung</label><input id="gradeLabel" placeholder="z.B. Test Algebra"></div>
+            <button class="btn primary span2" type="submit">➕ Note hinzufügen</button>
+          </form>
+        </div>
+        <div id="gradesView"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast"></div>
+  <div class="dialog-backdrop" id="dialog" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogText">
+      <p id="dialogText"></p>
+      <div class="row"><button class="btn" id="dialogCancel">Abbrechen</button><button class="btn primary" id="dialogOk">Ja</button></div>
+    </div>
+  </div>
+  <script>
+// LernFreund – läuft als Claude-Artifact. Der KI-Coach nutzt das Claude-Konto der Person,
+// Daten werden im Artifact-Speicher (db) und als Reserve im Browser gespeichert.
+"use strict";
+
+const SUBJECTS = [
+  "Mathematik", "Deutsch", "Englisch", "Französisch", "Italienisch", "Latein", "Biologie", "Chemie", "Physik",
+  "Geschichte", "Geografie", "Wirtschaft & Recht", "Informatik", "Bildnerisches Gestalten", "Musik", "Andere…",
+];
+
+const QUICK_PROMPTS = {
+  erklaeren: ["Erklär mir das Thema von Anfang an", "Gib mir ein Beispiel aus dem Alltag", "Was sind typische Fehler?", "Hast du eine Eselsbrücke?"],
+  ueben: ["Gib mir eine leichte Aufgabe", "Gib mir eine schwierigere Aufgabe", "Ich brauche einen Tipp"],
+  pruefen: ["Starte die Prüfungssimulation", "Nächste Frage bitte"],
+  zusammenfassen: ["Fass das Thema zusammen", "Mach mir einen Spickzettel mit Formeln/Regeln"],
+  feynman: ["Ich erkläre dir jetzt das Thema:"],
+};
+
+const STORAGE_KEY = "lernfreund-v1";
+
+const COACH_RULES = `Du bist "Lumi", ein freundlicher, geduldiger KI-Lerncoach für Schülerinnen und Schüler an einem Schweizer Gymnasium (ca. 14–18 Jahre).
+Ziel: Die lernende Person soll das Thema am Ende wirklich verstehen und sicher anwenden können, nicht nur auswendig lernen.
+- Schreib immer auf Deutsch mit Schweizer Rechtschreibung ("ss" statt "ß"). Ausnahme: Übungen in einer Fremdsprache, wenn das Fach eine Fremdsprache ist.
+- Erkläre Schritt für Schritt, mit einfachen Worten, Alltagsbeispielen und Eselsbrücken.
+- Stelle Rückfragen und kleine Kontrollfragen. Gib bei Hausaufgaben nicht einfach die Lösung, sondern führe zur Lösung hin.
+- Bei Fehlern: freundlich korrigieren, erklären warum, eine ähnliche Übung anbieten.
+- Kurze Absätze, Aufzählungen, **fett** für Schlüsselbegriffe. Formeln in einfacher Schreibweise (z.B. a² + b² = c²). Keine langen Texte.
+- Bleib beim Lernen. Bei schulfremden Themen lenkst du freundlich zurück.`;
+
+const MODE_HINTS = {
+  erklaeren: "Modus ERKLÄREN: Erkläre das Thema verständlich von Grund auf und prüfe am Ende mit 1–2 Fragen das Verständnis.",
+  ueben: "Modus ÜBEN: Gib eine Übungsaufgabe nach der anderen, mit steigender Schwierigkeit. Warte auf die Antwort, bevor du die Lösung zeigst.",
+  pruefen: "Modus PRÜFUNGSSIMULATION: Stelle prüfungsähnliche Fragen wie an einer Gymi-Prüfung, eine nach der anderen, und bewerte jede Antwort mit kurzem Feedback und einer Note (Schweizer Skala 1–6).",
+  zusammenfassen: "Modus ZUSAMMENFASSUNG: Erstelle eine kompakte, gut gegliederte Zusammenfassung mit den wichtigsten Begriffen, Regeln oder Formeln und typischen Fehlern.",
+  feynman: "Modus FEYNMAN: Bitte die Person, das Thema in eigenen Worten zu erklären, als würde sie es einem jüngeren Kind erklären. Gib danach Feedback: was gut war und was fehlt.",
+};
+
+function topicContext(t) {
+  return [`Fach: ${t.subject}`, `Thema: ${t.topic}`, `Vorwissen: ${t.level}`, t.goal ? `Notizen der lernenden Person: ${t.goal}` : ""]
+    .filter(Boolean).join("\n");
+}
+
+// ---------- Zustand ----------
+
+function emptyState() {
+  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null };
+}
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return { ...emptyState(), ...JSON.parse(raw) };
+  } catch { /* leerer Zustand */ }
+  return emptyState();
+}
+const state = loadLocal();
+
+// Cloud-Speicher: ein Dokument pro Thema plus ein "meta"-Dokument, privat pro Person.
+const cloud = { col: null, saved: {}, queue: Promise.resolve() };
+const MAX_CHAT = 60;
+
+function topicDoc(t) {
+  return { ...t, chat: t.chat.slice(-MAX_CHAT) };
+}
+function metaDoc() {
+  return { activeId: state.activeId, minutesByDay: state.minutesByDay, grades: state.grades, theme: state.theme, order: state.topics.map((t) => t.id) };
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* Browser-Speicher nicht verfügbar */ }
+  if (!cloud.col) return;
+  clearTimeout(save.t);
+  save.t = setTimeout(syncCloud, 600);
+}
+
+function syncCloud() {
+  cloud.queue = cloud.queue.then(async () => {
+    const docs = { meta: metaDoc() };
+    state.topics.forEach((t) => (docs["t_" + t.id] = topicDoc(t)));
+    try {
+      for (const [id, body] of Object.entries(docs)) {
+        const json = JSON.stringify(body);
+        if (cloud.saved[id] === json) continue;
+        await cloud.col.doc(id).set(body);
+        cloud.saved[id] = json;
+      }
+      for (const id of Object.keys(cloud.saved)) {
+        if (!(id in docs)) { await cloud.col.doc(id).delete(); delete cloud.saved[id]; }
+      }
+    } catch (err) {
+      console.warn("Cloud-Speichern fehlgeschlagen", err);
+      cloud.col = null; // weiter nur im Browser speichern
+    }
+  });
+}
+
+async function connectCloud() {
+  try {
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    const col = db.collection("data/users/" + id);
+    const snap = await col.get();
+    if (snap.empty) {
+      cloud.col = col;
+      if (state.topics.length || state.grades.length) syncCloud(); // lokale Daten hochladen
+      return;
+    }
+    const byId = {};
+    let meta = null;
+    snap.docs.forEach((d) => {
+      const body = structuredClone(d.data());
+      cloud.saved[d.id] = JSON.stringify(body);
+      if (d.id === "meta") meta = body;
+      else if (d.id.startsWith("t_")) byId[body.id] = body;
+    });
+    const order = meta?.order || Object.keys(byId);
+    state.topics = order.map((id) => byId[id]).filter(Boolean)
+      .concat(Object.values(byId).filter((t) => !order.includes(t.id)));
+    if (meta) {
+      state.activeId = meta.activeId; state.minutesByDay = meta.minutesByDay || {};
+      state.grades = meta.grades || []; state.theme = meta.theme || null;
+    }
+    cloud.col = col;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* egal */ }
+    applyTheme();
+    renderAll();
+  } catch (err) {
+    console.warn("Cloud-Speicher nicht verfügbar", err);
+  }
+}
+
+// ---------- KI-Coach (Claude über das Konto der Person) ----------
+
+let samplePromise = null;
+function getSample() {
+  if (!samplePromise) samplePromise = window.claude?.use ? window.claude.use("sample") : Promise.resolve(null);
+  return samplePromise;
+}
+
+function sampleErrorText(e) {
+  switch (e?.code) {
+    case "not_granted": return "Du hast dem Coach den Zugriff auf Claude nicht erlaubt. Lade die Seite neu und klicke auf „Erlauben“.";
+    case "sampling_disabled": return "Claude ist für dein Konto gerade nicht verfügbar.";
+    case "rate_limited": return "Du hast gerade sehr viele Anfragen geschickt oder dein Nutzungslimit erreicht. Warte etwas und versuch es dann nochmals.";
+    case "session_expired": return "Bitte melde dich bei Claude neu an.";
+    case "refused": return "Dazu kann der Coach nichts sagen. Formuliere die Frage anders.";
+    case "invalid_json": return "Die Antwort des Coaches war unvollständig. Bitte nochmals versuchen.";
+    case "cancelled": return "Abgebrochen.";
+    default: return "Der Coach ist gerade nicht erreichbar. Versuch es gleich nochmals.";
+  }
+}
+
+async function askJson(prompt) {
+  const sample = await getSample();
+  if (!sample) throw new Error("Der KI-Coach funktioniert nur, wenn du die App auf claude.ai öffnest.");
+  try {
+    return await sample.json(COACH_RULES + "\n\n" + prompt, { cache: false });
+  } catch (e) {
+    throw new Error(sampleErrorText(e));
+  }
+}
+
+const $ = (sel) => document.querySelector(sel);
+const activeTopic = () => state.topics.find((t) => t.id === state.activeId) || null;
+let currentMode = "erklaeren";
+let selectedSubject = SUBJECTS[0];
+
+// ---------- Hilfsfunktionen ----------
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Kleiner, sicherer Markdown-Renderer (Text wird zuerst escaped).
+function md(text) {
+  const inline = (s) => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+    .replace(/_([^_\n]+)_/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+  const lines = String(text).split("\n");
+  let html = "", list = null;
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const line of lines) {
+    let m;
+    if ((m = line.match(/^\s*[-*•]\s+(.*)/))) {
+      if (list !== "ul") { closeList(); html += "<ul>"; list = "ul"; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if ((m = line.match(/^\s*\d+[.)]\s+(.*)/))) {
+      if (list !== "ol") { closeList(); html += "<ol>"; list = "ol"; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if ((m = line.match(/^#{1,6}\s+(.*)/))) {
+      closeList(); html += `<h4>${inline(m[1])}</h4>`;
+    } else if (line.trim() === "") {
+      closeList();
+    } else {
+      closeList(); html += `<p>${inline(line)}</p>`;
+    }
+  }
+  closeList();
+  return html;
+}
+
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.add("hidden"), 3000);
+}
+
+// Eigener Bestätigungsdialog (Browser-Dialoge funktionieren im Artifact nicht).
+function ask(message, okLabel = "Ja") {
+  return new Promise((resolve) => {
+    const dlg = $("#dialog");
+    $("#dialogText").textContent = message;
+    $("#dialogOk").textContent = okLabel;
+    dlg.hidden = false;
+    $("#dialogOk").focus();
+    const done = (v) => { dlg.hidden = true; $("#dialogOk").onclick = $("#dialogCancel").onclick = null; resolve(v); };
+    $("#dialogOk").onclick = () => done(true);
+    $("#dialogCancel").onclick = () => done(false);
+  });
+}
+
+const todayISO = () => isoDate(new Date());
+function isoDate(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+function daysUntil(iso) {
+  if (!iso) return null;
+  const a = new Date(todayISO() + "T00:00:00"), b = new Date(iso + "T00:00:00");
+  return Math.round((b - a) / 86400000);
+}
+function formatDate(iso, opts = { weekday: "short", day: "numeric", month: "short" }) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("de-CH", opts);
+}
+
+function requireTopic() {
+  const t = activeTopic();
+  if (!t) toast("Wähle zuerst ein Fach und ein Thema aus 👈");
+  return t;
+}
+
+function setBusy(btn, busy, label) {
+  if (busy) {
+    btn.dataset.label = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner"></span> ${label || "Coach denkt nach…"}`;
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn.dataset.label || btn.innerHTML;
+    btn.disabled = false;
+  }
+}
+
+function logMinutes(min) {
+  const d = todayISO();
+  state.minutesByDay[d] = (state.minutesByDay[d] || 0) + min;
+  save();
+  renderStreak();
+}
+
+function markActiveToday() {
+  const d = todayISO();
+  if (!(d in state.minutesByDay)) { state.minutesByDay[d] = 0; save(); renderStreak(); }
+}
+
+function streakCount() {
+  let count = 0;
+  const d = new Date();
+  if (!(isoDate(d) in state.minutesByDay)) d.setDate(d.getDate() - 1); // heute zählt erst, wenn gelernt
+  while (isoDate(d) in state.minutesByDay) { count++; d.setDate(d.getDate() - 1); }
+  return count;
+}
+
+// ---------- Theme ----------
+
+function applyTheme() {
+  if (state.theme) document.documentElement.dataset.theme = state.theme;
+  else delete document.documentElement.dataset.theme;
+}
+$("#themeToggle").addEventListener("click", () => {
+  const dark = state.theme ? state.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  state.theme = dark ? "light" : "dark";
+  save(); applyTheme();
+});
+
+// ---------- Fach & Thema ----------
+
+function renderSubjects() {
+  $("#subjects").innerHTML = SUBJECTS.map((s) =>
+    `<button type="button" class="${s === selectedSubject ? "active" : ""}" data-s="${esc(s)}">${esc(s)}</button>`).join("");
+  $("#customSubject").classList.toggle("hidden", selectedSubject !== "Andere…");
+}
+$("#subjects").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  selectedSubject = b.dataset.s;
+  renderSubjects();
+});
+
+$("#topicForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const subject = selectedSubject === "Andere…" ? $("#customSubject").value.trim() : selectedSubject;
+  const topic = $("#topicInput").value.trim();
+  if (!subject || !topic) return toast("Bitte Fach und Thema angeben.");
+  const t = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    subject, topic,
+    level: $("#levelInput").value,
+    goal: $("#goalInput").value.trim(),
+    examDate: $("#examInput").value || "",
+    chat: [], plan: null, planDone: {}, quizHistory: [], cards: [],
+    createdAt: Date.now(),
+  };
+  state.topics.unshift(t);
+  state.activeId = t.id;
+  save();
+  e.target.reset();
+  renderAll();
+  switchTab("coach");
+  sendChat(`Hallo! Ich möchte "${topic}" in ${subject} lernen. Wo fangen wir an?`);
+});
+
+function renderTopicList() {
+  const list = $("#topicList");
+  if (!state.topics.length) {
+    list.innerHTML = `<li class="muted" style="cursor:default">Noch keine Themen – leg oben los! ✨</li>`;
+    return;
+  }
+  list.innerHTML = state.topics.map((t) => {
+    const d = daysUntil(t.examDate);
+    const badge = d !== null && d >= 0 ? `<span class="pill">${d === 0 ? "heute!" : `in ${d} T.`}</span>` : "";
+    return `<li class="${t.id === state.activeId ? "active" : ""}" data-id="${t.id}">
+      <div><div class="t-sub">${esc(t.subject)}</div><div>${esc(t.topic)} ${badge}</div></div>
+      <button class="del" data-del="${t.id}" title="Thema löschen">✕</button></li>`;
+  }).join("");
+}
+$("#topicList").addEventListener("click", (e) => {
+  const del = e.target.closest("[data-del]");
+  if (del) {
+    const t = state.topics.find((x) => x.id === del.dataset.del);
+    if (t) ask(`„${t.topic}“ mit Chat, Lernplan und Karten löschen?`, "Löschen").then((ok) => {
+      if (!ok) return;
+      state.topics = state.topics.filter((x) => x.id !== t.id);
+      if (state.activeId === t.id) state.activeId = state.topics[0]?.id || null;
+      save(); renderAll();
+    });
+    return;
+  }
+  const li = e.target.closest("li[data-id]");
+  if (li) { state.activeId = li.dataset.id; save(); renderAll(); }
+});
+
+function renderActiveTopic() {
+  const t = activeTopic();
+  const el = $("#activeTopic");
+  if (!t) {
+    el.innerHTML = `<div><h1>Hoi! Was lernst du gerade? 👋</h1>
+      <ol class="steps">
+        <li><strong>Fach wählen und Thema eingeben</strong>, z.B. Mathematik → Quadratische Gleichungen.</li>
+        <li><strong>Mit Coach Lumi lernen:</strong> erklären lassen, üben, Prüfung simulieren.</li>
+        <li><strong>Prüfungsdatum setzen</strong>, dann macht dir Lumi einen Lernplan bis dahin.</li>
+      </ol>
+      <p class="notice" style="margin-top:12px">Beim ersten Gespräch fragt Claude, ob die App dein Claude-Konto nutzen darf. Klick auf „Erlauben“.</p></div>`;
+    return;
+  }
+  const d = daysUntil(t.examDate);
+  let cd = `<button class="btn small" id="setExam">📅 Prüfungsdatum setzen</button>`;
+  if (t.examDate) {
+    cd = d < 0 ? `<span class="muted">Prüfung war am ${formatDate(t.examDate)}</span>`
+      : `<strong>${d === 0 ? "Heute!" : d}</strong><span class="muted">${d === 0 ? "Viel Erfolg! 🍀" : d === 1 ? "Tag bis zur Prüfung" : "Tage bis zur Prüfung"}</span>`;
+  }
+  el.innerHTML = `<div><span class="subject-badge">${esc(t.subject)}</span><h1>${esc(t.topic)}</h1>
+    <span class="muted">${esc(t.level)}</span></div><div class="countdown">${cd}</div>`;
+  $("#setExam")?.addEventListener("click", () => { switchTab("plan"); $("#planExam").focus(); });
+}
+
+// ---------- Tabs ----------
+
+function switchTab(name) {
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${name}`));
+  if (name === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
+}
+$("#tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b) switchTab(b.dataset.tab);
+});
+
+// ---------- Übersicht ----------
+
+function renderOverview() {
+  const totalMin = Object.values(state.minutesByDay).reduce((a, b) => a + b, 0);
+  const allQuizzes = state.topics.flatMap((t) => t.quizHistory || []);
+  const avgQuiz = allQuizzes.length ? Math.round(allQuizzes.reduce((a, q) => a + q.score / q.total, 0) / allQuizzes.length * 100) : null;
+  const t = activeTopic();
+  const planProg = t?.plan ? planProgress(t) : null;
+  $("#statsGrid").innerHTML = [
+    ["🔥", streakCount(), "Tage Lern-Serie"],
+    ["⏱️", totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`, "Lernzeit total"],
+    ["📚", state.topics.length, "Themen"],
+    ["❓", avgQuiz === null ? "–" : `${avgQuiz}%`, "Quiz-Schnitt"],
+    ["🗓️", planProg === null ? "–" : `${planProg}%`, "Lernplan (aktuelles Thema)"],
+  ].map(([i, v, l]) => `<div class="stat"><div class="v">${i} ${v}</div><div class="l">${l}</div></div>`).join("");
+
+  // Heutige Aufgaben aus allen Lernplänen
+  const today = todayISO();
+  const items = [];
+  for (const topic of state.topics) {
+    topic.plan?.days.forEach((day, di) => {
+      if (day.date === today) items.push({ topic, day, di });
+    });
+  }
+  $("#todayTasks").innerHTML = items.length ? items.map(({ topic, day, di }) => `
+    <div style="margin-bottom:10px"><h3>${esc(topic.subject)} · ${esc(day.title)} <span class="pill">${day.minutes} min</span></h3>
+    ${day.tasks.map((task, ti) => taskHtml(topic, di, ti, task)).join("")}</div>`).join("")
+    : `<p class="muted">Für heute ist nichts geplant. Erstelle einen Lernplan oder übe mit dem Coach! 💪</p>`;
+
+  const exams = state.topics.filter((x) => x.examDate && daysUntil(x.examDate) >= 0)
+    .sort((a, b) => a.examDate.localeCompare(b.examDate));
+  $("#upcomingExams").innerHTML = exams.length ? `<table><tbody>${exams.map((x) => {
+    const d = daysUntil(x.examDate);
+    return `<tr><td>${formatDate(x.examDate)}</td><td><strong>${esc(x.subject)}</strong> – ${esc(x.topic)}</td>
+      <td class="${d <= 3 ? "bad" : ""}">${d === 0 ? "heute" : `in ${d} Tagen`}</td></tr>`;
+  }).join("")}</tbody></table>` : `<p class="muted">Keine Prüfungen eingetragen.</p>`;
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(isoDate(d)); }
+  const max = Math.max(30, ...days.map((d) => state.minutesByDay[d] || 0));
+  $("#weekChart").innerHTML = days.map((d) => {
+    const v = state.minutesByDay[d] || 0;
+    return `<div class="bar-wrap"><span class="bv">${v ? v + "m" : ""}</span><div class="bar" style="height:${(v / max) * 100}%"></div>
+      <span class="bl">${formatDate(d, { weekday: "short" })}</span></div>`;
+  }).join("");
+}
+
+// ---------- Coach-Chat ----------
+
+function renderChat() {
+  const t = activeTopic();
+  const chat = $("#chat");
+  if (!t) {
+    chat.innerHTML = `<div class="empty">🤖 Hoi! Ich bin Lumi, dein Lerncoach.<br>Wähle links ein Fach und ein Thema, dann legen wir los.</div>`;
+  } else if (!t.chat.length) {
+    chat.innerHTML = `<div class="empty">🤖 Bereit für <strong>${esc(t.topic)}</strong>! Stell mir eine Frage oder wähle unten einen Vorschlag.</div>`;
+  } else {
+    chat.innerHTML = t.chat.map((m) => m.role === "user"
+      ? `<div class="msg user">${esc(m.content)}</div>`
+      : `<div class="msg assistant">${md(m.content)}</div>`).join("");
+  }
+  chat.scrollTop = chat.scrollHeight;
+  $("#quickPrompts").innerHTML = (QUICK_PROMPTS[currentMode] || []).map((q) => `<button type="button">${esc(q)}</button>`).join("");
+}
+
+$("#modes").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  currentMode = b.dataset.mode;
+  document.querySelectorAll("#modes button").forEach((x) => x.classList.toggle("active", x === b));
+  renderChat();
+});
+
+$("#quickPrompts").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (currentMode === "feynman") { $("#chatInput").value = b.textContent + " "; $("#chatInput").focus(); return; }
+  sendChat(b.textContent);
+});
+
+let chatBusy = false;
+let chatCtl = null;
+async function sendChat(text) {
+  const t = requireTopic();
+  if (!t || chatBusy || !text.trim()) return;
+  chatBusy = true;
+  $("#sendBtn").disabled = true;
+  markActiveToday();
+  t.chat.push({ role: "user", content: text.trim() });
+  save();
+  renderChat();
+
+  const chat = $("#chat");
+  const bubble = document.createElement("div");
+  bubble.className = "msg assistant typing";
+  chat.appendChild(bubble);
+  chat.scrollTop = chat.scrollHeight;
+
+  let answer = "";
+  chatCtl = new AbortController();
+  $("#stopBtn").hidden = false;
+  try {
+    const sample = await getSample();
+    if (!sample) throw { code: "unavailable" };
+    const rules = `${COACH_RULES}\n\n${topicContext(t)}\n${MODE_HINTS[currentMode] || MODE_HINTS.erklaeren}\n\nDas Gespräch mit der lernenden Person folgt.`;
+    const history = t.chat.slice(-30);
+    while (history.length && history[0].role !== "user") history.shift();
+    const { text: reply, truncated } = await sample([{ role: "user", content: rules }, ...history], {
+      cache: false,
+      signal: chatCtl.signal,
+      onText: ({ text: soFar }) => {
+        answer = soFar;
+        bubble.innerHTML = md(answer);
+        chat.scrollTop = chat.scrollHeight;
+      },
+    });
+    answer = reply + (truncated ? "\n\n_(Antwort wurde gekürzt. Frag nach dem Rest.)_" : "");
+  } catch (e) {
+    if (e?.code === "unavailable") answer = "⚠️ Der KI-Coach funktioniert nur, wenn du die App auf claude.ai öffnest.";
+    else if (e?.code === "refused") answer = "⚠️ " + sampleErrorText(e);
+    else {
+      answer = e?.text || answer;
+      if (e?.code !== "cancelled") answer += `\n\n⚠️ ${sampleErrorText(e)}`;
+    }
+  }
+  $("#stopBtn").hidden = true;
+  bubble.classList.remove("typing");
+  if (answer.trim()) t.chat.push({ role: "assistant", content: answer.trim() });
+  else t.chat.pop(); // nichts bekommen → Frage wieder entfernen, damit der Verlauf gültig bleibt
+  save();
+  chatBusy = false;
+  $("#sendBtn").disabled = false;
+  renderChat();
+}
+
+$("#stopBtn").addEventListener("click", () => chatCtl?.abort());
+
+$("#chatForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("#chatInput").value;
+  $("#chatInput").value = "";
+  sendChat(text);
+});
+$("#chatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#chatForm").requestSubmit(); }
+});
+$("#clearChat").addEventListener("click", async () => {
+  const t = activeTopic();
+  if (t && t.chat.length && await ask("Chatverlauf für dieses Thema löschen?", "Löschen")) { t.chat = []; save(); renderChat(); }
+});
+
+// ---------- Lernplan ----------
+
+function planProgress(t) {
+  const all = t.plan.days.reduce((n, d) => n + d.tasks.length, 0);
+  const done = Object.values(t.planDone || {}).filter(Boolean).length;
+  return all ? Math.round((done / all) * 100) : 0;
+}
+
+function taskHtml(t, di, ti, task) {
+  const key = `${di}-${ti}`;
+  const checked = t.planDone?.[key];
+  return `<label class="task ${checked ? "checked" : ""}"><input type="checkbox" data-topic="${t.id}" data-key="${key}" ${checked ? "checked" : ""}>
+    <span>${esc(task)}</span></label>`;
+}
+
+function onTaskToggle(e) {
+  const cb = e.target.closest("input[type=checkbox][data-key]");
+  if (!cb) return;
+  const t = state.topics.find((x) => x.id === cb.dataset.topic);
+  if (!t) return;
+  t.planDone = t.planDone || {};
+  t.planDone[cb.dataset.key] = cb.checked;
+  if (cb.checked) { markActiveToday(); }
+  save();
+  renderPlan(); renderOverview();
+  if (cb.checked && t.plan && planProgress(t) === 100) toast("🎉 Lernplan komplett erledigt! Super gemacht!");
+}
+$("#planView").addEventListener("change", onTaskToggle);
+$("#todayTasks").addEventListener("change", onTaskToggle);
+
+function renderPlan() {
+  const t = activeTopic();
+  $("#planExam").value = t?.examDate || "";
+  $("#planExam").min = todayISO();
+  const view = $("#planView");
+  if (!t) { view.innerHTML = ""; return; }
+  if (!t.plan) {
+    view.innerHTML = `<div class="card empty">🗓️ Noch kein Lernplan. Wähle dein Prüfungsdatum und der Coach erstellt dir einen persönlichen Plan.</div>`;
+    return;
+  }
+  const today = todayISO();
+  const prog = planProgress(t);
+  view.innerHTML = `
+    <div class="card">
+      <h2>Dein Plan bis ${formatDate(t.examDate, { weekday: "long", day: "numeric", month: "long" })}</h2>
+      <p>${esc(t.plan.summary)}</p>
+      <div class="progress"><div style="width:${prog}%"></div></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">${prog}% erledigt</span>
+        <button class="btn small" id="icsBtn">📅 In Kalender exportieren</button></div>
+    </div>
+    ${t.plan.days.map((day, di) => {
+      const done = day.tasks.length && day.tasks.every((_, ti) => t.planDone?.[`${di}-${ti}`]);
+      const cls = [done ? "done" : "", day.date === today ? "today" : "", day.date < today ? "past" : ""].join(" ");
+      return `<div class="card plan-day ${cls}">
+        <header><div><div class="date">${day.date === today ? "Heute · " : ""}${formatDate(day.date, { weekday: "long", day: "numeric", month: "long" })}</div>
+        <h3>${esc(day.title)}</h3></div><div><span class="pill">⏱️ ${day.minutes} min</span><span class="pill">${esc(day.method)}</span></div></header>
+        ${day.tasks.map((task, ti) => taskHtml(t, di, ti, task)).join("")}
+      </div>`;
+    }).join("")}
+    ${t.plan.tips?.length ? `<div class="card"><h2>💡 Tipps vom Coach</h2><ul class="tips">${t.plan.tips.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}`;
+  $("#icsBtn").addEventListener("click", () => exportIcs(t));
+}
+
+$("#planForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const t = requireTopic();
+  if (!t) return;
+  const examDate = $("#planExam").value;
+  if (daysUntil(examDate) < 0) return toast("Das Prüfungsdatum liegt in der Vergangenheit.");
+  if (t.plan && !(await ask("Deinen bestehenden Lernplan durch einen neuen ersetzen?", "Ersetzen"))) return;
+  const btn = $("#planBtn");
+  setBusy(btn, true, "Coach erstellt deinen Plan…");
+  try {
+    const busy = $("#planBusy").value.trim();
+    const plan = await askJson(`Erstelle einen persönlichen Lernplan.
+
+${topicContext(t)}
+Heute ist: ${todayISO()} (${formatDate(todayISO(), { weekday: "long" })})
+Prüfungsdatum: ${examDate}
+Lernzeit pro Tag: ca. ${$("#planMinutes").value} Minuten
+Lerntage pro Woche: ${$("#planDays").value}
+${busy ? `Besondere Tage: ${busy}` : ""}
+
+Regeln:
+- Plane nur Tage von heute bis und mit dem Tag vor der Prüfung. Ist die Prüfung heute oder morgen, mach einen kompakten Notfallplan.
+- Zuerst verstehen, dann üben, dann wiederholen (verteiltes Wiederholen). Die letzten 1–2 Tage sind für Wiederholung und eine Probeprüfung.
+- Halte dich an die Lernzeit und die Anzahl Lerntage pro Woche; freie Tage lässt du weg.
+- Aufgaben sind konkret und abhakbar (z.B. "5 Übungsaufgaben zu Bruchgleichungen lösen"), 2–4 pro Tag.
+- Passe Tempo und Schwierigkeit an das Vorwissen an.
+
+Antworte nur mit JSON in genau dieser Form:
+{"summary": "2-3 motivierende Sätze zum Plan", "days": [{"date": "YYYY-MM-DD", "title": "kurzer Titel", "minutes": 30, "method": "z.B. Übungsaufgaben", "tasks": ["Aufgabe 1", "Aufgabe 2"]}], "tips": ["3-5 persönliche Lerntipps"]}`);
+    if (!plan || !Array.isArray(plan.days) || !plan.days.length) throw new Error("Der Plan war unvollständig. Bitte nochmals versuchen.");
+    plan.days = plan.days.filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({
+      date: d.date, title: String(d.title || "Lernen"), minutes: Number(d.minutes) || 30,
+      method: String(d.method || ""), tasks: Array.isArray(d.tasks) ? d.tasks.map(String) : [],
+    }));
+    plan.summary = String(plan.summary || "");
+    plan.tips = Array.isArray(plan.tips) ? plan.tips.map(String) : [];
+    plan.days.sort((a, b) => a.date.localeCompare(b.date));
+    t.examDate = examDate; t.plan = plan; t.planDone = {};
+    save(); renderAll();
+    toast("✅ Dein Lernplan ist bereit!");
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+async function exportIcs(t) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const icsEsc = (s) => String(s).replace(/[\\;,]/g, (c) => "\\" + c).replace(/\n/g, "\\n");
+  const events = t.plan.days.map((d, i) => {
+    const start = d.date.replace(/-/g, "");
+    const end = new Date(d.date + "T00:00:00"); end.setDate(end.getDate() + 1);
+    return ["BEGIN:VEVENT", `UID:${t.id}-${i}@lernfreund`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${start}`,
+      `DTEND;VALUE=DATE:${isoDate(end).replace(/-/g, "")}`, `SUMMARY:${icsEsc(`📚 ${t.subject}: ${d.title} (${d.minutes} min)`)}`,
+      `DESCRIPTION:${icsEsc(d.tasks.map((x) => "• " + x).join("\n"))}`, "END:VEVENT"].join("\r\n");
+  });
+  const exam = t.examDate.replace(/-/g, "");
+  events.push(["BEGIN:VEVENT", `UID:${t.id}-exam@lernfreund`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${exam}`,
+    `SUMMARY:${icsEsc(`📝 Prüfung ${t.subject}: ${t.topic}`)}`, "END:VEVENT"].join("\r\n"));
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//LernFreund//DE", ...events, "END:VCALENDAR"].join("\r\n");
+  const downloads = await window.claude?.use?.("downloads");
+  if (!downloads) return toast("Der Kalender-Export ist hier nicht verfügbar.");
+  try {
+    await downloads.save({ filename: `Lernplan-${t.topic.replace(/[^\wäöüÄÖÜ-]+/g, "_")}.ics`, data: ics });
+  } catch (e) {
+    if (e?.code === "rejected_extension") toast("Kalenderdateien kann diese Ansicht nicht speichern.");
+    else if (e?.code !== "declined") toast("Der Export hat nicht geklappt.");
+  }
+}
+
+// ---------- Quiz ----------
+
+let quiz = null; // { questions, index, score, answered, wrong: [] }
+
+function renderQuiz() {
+  const view = $("#quizView");
+  const t = activeTopic();
+  if (!quiz) {
+    const hist = t?.quizHistory || [];
+    view.innerHTML = hist.length ? `<div class="card"><h2>Bisherige Quiz</h2><table><tbody>${hist.slice(-8).reverse().map((h) =>
+      `<tr><td>${formatDate(h.date)}</td><td>${h.score} / ${h.total}</td><td>${Math.round(h.score / h.total * 100)}%</td></tr>`).join("")}</tbody></table></div>` : "";
+    return;
+  }
+  if (quiz.index >= quiz.questions.length) {
+    const pct = Math.round((quiz.score / quiz.questions.length) * 100);
+    const msg = pct === 100 ? "Perfekt! Du kannst das Thema! 🏆" : pct >= 75 ? "Sehr gut! Fast perfekt 💪" : pct >= 50 ? "Gut! Schau dir die Fehler nochmals an." : "Weiter üben – der Coach hilft dir! 🤗";
+    view.innerHTML = `<div class="card center"><div class="score-big">${quiz.score} / ${quiz.questions.length}</div><p>${msg}</p>
+      <div class="row center">${quiz.wrong.length ? `<button class="btn primary" id="discussWrong">🤖 Fehler mit Coach besprechen</button>` : ""}
+      <button class="btn" id="quizAgain">Neues Quiz</button></div></div>`;
+    $("#quizAgain").addEventListener("click", () => $("#quizForm").requestSubmit());
+    $("#discussWrong")?.addEventListener("click", () => {
+      const text = "Ich hatte im Quiz diese Fragen falsch. Kannst du mir erklären, was ich falsch verstanden habe?\n\n" +
+        quiz.wrong.map((w) => `• Frage: ${w.question}\n  Meine Antwort: ${w.mine}\n  Richtig: ${w.right}`).join("\n");
+      switchTab("coach");
+      sendChat(text);
+    });
+    return;
+  }
+  const q = quiz.questions[quiz.index];
+  view.innerHTML = `<div class="card">
+    <div class="muted">Frage ${quiz.index + 1} von ${quiz.questions.length} · Punkte: ${quiz.score}</div>
+    <div class="progress"><div style="width:${(quiz.index / quiz.questions.length) * 100}%; background:var(--primary)"></div></div>
+    <h3 style="margin-top:12px">${esc(q.question)}</h3>
+    <div class="q-options">${q.options.map((o, i) => `<button class="q-option" data-i="${i}">${String.fromCharCode(65 + i)}) ${esc(o)}</button>`).join("")}</div>
+    <div id="qFeedback"></div></div>`;
+}
+
+$("#quizView").addEventListener("click", (e) => {
+  const b = e.target.closest(".q-option");
+  if (b && quiz && !quiz.answered) {
+    quiz.answered = true;
+    const q = quiz.questions[quiz.index];
+    const i = Number(b.dataset.i);
+    const right = i === q.correctIndex;
+    if (right) quiz.score++;
+    else quiz.wrong.push({ question: q.question, mine: q.options[i], right: q.options[q.correctIndex] });
+    document.querySelectorAll(".q-option").forEach((x, xi) => {
+      x.disabled = true;
+      if (xi === q.correctIndex) x.classList.add("correct");
+      else if (xi === i) x.classList.add("wrong");
+    });
+    $("#qFeedback").innerHTML = `<div class="q-explain"><strong>${right ? "✅ Richtig!" : "❌ Leider falsch."}</strong> ${esc(q.explanation)}</div>
+      <div class="row-end" style="margin-top:10px"><button class="btn primary" id="qNext">${quiz.index + 1 < quiz.questions.length ? "Weiter →" : "Ergebnis anzeigen"}</button></div>`;
+    return;
+  }
+  if (e.target.id === "qNext") {
+    quiz.index++; quiz.answered = false;
+    if (quiz.index >= quiz.questions.length) {
+      const t = activeTopic();
+      t.quizHistory = t.quizHistory || [];
+      t.quizHistory.push({ date: todayISO(), score: quiz.score, total: quiz.questions.length });
+      markActiveToday();
+      save(); renderOverview();
+    }
+    renderQuiz();
+  }
+});
+
+$("#quizForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const t = requireTopic();
+  if (!t) return;
+  const btn = $("#quizBtn");
+  setBusy(btn, true, "Coach erstellt dein Quiz…");
+  try {
+    const data = await askJson(`Erstelle ein Quiz mit ${$("#quizCount").value} Multiple-Choice-Fragen, je genau 4 Antworten, genau eine richtig.
+
+${topicContext(t)}
+Schwierigkeit: ${$("#quizDiff").value}
+
+Die Fragen prüfen echtes Verständnis, nicht nur Auswendiggelerntes. Verteile die richtige Antwort auf verschiedene Positionen.
+Antworte nur mit JSON in genau dieser Form:
+{"questions": [{"question": "…", "options": ["A", "B", "C", "D"], "correctIndex": 0, "explanation": "kurze Erklärung, warum das richtig ist"}]}`);
+    const questions = (Array.isArray(data?.questions) ? data.questions : [])
+      .filter((q) => q && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex < q.options.length)
+      .map((q) => ({ question: String(q.question), options: q.options.map(String), correctIndex: q.correctIndex, explanation: String(q.explanation || "") }));
+    if (!questions.length) throw new Error("Keine Fragen erhalten. Bitte nochmals versuchen.");
+    quiz = { questions, index: 0, score: 0, answered: false, wrong: [] };
+    renderQuiz();
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+// ---------- Karteikarten (vereinfachtes Leitner-System) ----------
+
+let cardIndex = 0;
+
+function dueCards(t) {
+  // Box 1 immer, Box 2 jeden 2. Tag, Box 3 jeden 4. Tag (vereinfacht)
+  const today = todayISO();
+  return t.cards.filter((c) => !c.next || c.next <= today);
+}
+
+function renderCards() {
+  const view = $("#cardsView");
+  const t = activeTopic();
+  if (!t) { view.innerHTML = ""; return; }
+  if (!t.cards.length) {
+    view.innerHTML = `<div class="card empty">🃏 Noch keine Karten für dieses Thema.</div>`;
+    return;
+  }
+  const due = dueCards(t);
+  const boxCount = [1, 2, 3].map((b) => t.cards.filter((c) => (c.box || 1) === b).length);
+  const stats = `<div class="boxes"><span class="pill">📦 Box 1: ${boxCount[0]}</span><span class="pill">📦 Box 2: ${boxCount[1]}</span>
+    <span class="pill">⭐ Box 3 (sitzt!): ${boxCount[2]}</span><span class="pill">Heute fällig: ${due.length}</span></div>`;
+  if (!due.length) {
+    view.innerHTML = `<div class="card center"><p>🎉 Alle Karten für heute gelernt!</p>${stats}
+      <button class="btn" id="cardsAll" style="margin-top:10px">Trotzdem alle wiederholen</button></div>`;
+    $("#cardsAll").addEventListener("click", () => { t.cards.forEach((c) => (c.next = "")); save(); renderCards(); });
+    return;
+  }
+  if (cardIndex >= due.length) cardIndex = 0;
+  const c = due[cardIndex];
+  view.innerHTML = `<div class="card">
+    <div class="muted" style="margin-bottom:8px">Karte ${cardIndex + 1} von ${due.length} · tippe zum Umdrehen</div>
+    <div class="flashcard" id="flashcard"><div class="flashcard-inner">
+      <div class="flashcard-face">${esc(c.front)}</div>
+      <div class="flashcard-face back">${esc(c.back)}</div></div></div>
+    <div class="row center"><button class="btn danger" data-know="0">😕 Wusste ich nicht</button>
+      <button class="btn success" data-know="1">😎 Gewusst!</button></div>
+    ${stats}</div>`;
+}
+
+$("#cardsView").addEventListener("click", (e) => {
+  const fc = e.target.closest("#flashcard");
+  if (fc) { fc.classList.toggle("flipped"); return; }
+  const b = e.target.closest("[data-know]");
+  if (!b) return;
+  const t = activeTopic();
+  const due = dueCards(t);
+  const c = due[cardIndex];
+  if (!c) return;
+  const intervals = { 1: 0, 2: 2, 3: 4 };
+  if (b.dataset.know === "1") {
+    c.box = Math.min((c.box || 1) + 1, 3);
+    const d = new Date(); d.setDate(d.getDate() + intervals[c.box]);
+    c.next = intervals[c.box] ? isoDate(d) : "";
+    if (!c.next) cardIndex++;
+  } else {
+    c.box = 1; c.next = "";
+    cardIndex++;
+  }
+  markActiveToday();
+  save(); renderCards();
+});
+
+$("#cardsBtn").addEventListener("click", async () => {
+  const t = requireTopic();
+  if (!t) return;
+  const btn = $("#cardsBtn");
+  setBusy(btn, true, "Coach schreibt Karten…");
+  try {
+    const data = await askJson(`Erstelle 12 Karteikarten. Vorderseite: Begriff oder Frage. Rückseite: kurze, präzise Antwort.
+
+${topicContext(t)}
+${t.cards.length ? `Diese Karten gibt es schon, wiederhole sie nicht: ${t.cards.map((c) => c.front).slice(0, 60).join(" | ")}` : ""}
+
+Antworte nur mit JSON in genau dieser Form:
+{"cards": [{"front": "…", "back": "…"}]}`);
+    data.cards = (Array.isArray(data?.cards) ? data.cards : []).filter((c) => c && c.front && c.back)
+      .map((c) => ({ front: String(c.front), back: String(c.back) }));
+    if (!data.cards.length) throw new Error("Keine Karten erhalten. Bitte nochmals versuchen.");
+    t.cards.push(...data.cards.map((c) => ({ ...c, box: 1, next: "" })));
+    cardIndex = 0;
+    save(); renderCards();
+    toast(`✅ ${data.cards.length} neue Karten!`);
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+$("#addCardBtn").addEventListener("click", () => {
+  if (!requireTopic()) return;
+  $("#cardForm").hidden = !$("#cardForm").hidden;
+  if (!$("#cardForm").hidden) $("#cardFront").focus();
+});
+$("#cardForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const t = requireTopic();
+  const front = $("#cardFront").value.trim(), back = $("#cardBack").value.trim();
+  if (!t || !front || !back) return toast("Bitte beide Seiten ausfüllen.");
+  t.cards.push({ front, back, box: 1, next: "" });
+  e.target.reset();
+  save(); renderCards();
+  toast("Karte gespeichert.");
+});
+
+// ---------- Pomodoro-Timer ----------
+
+const timer = { total: 25 * 60, left: 25 * 60, running: false, isBreak: false, handle: null, endAt: 0 };
+
+function renderTimer() {
+  const m = Math.floor(timer.left / 60), s = timer.left % 60;
+  const txt = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  $("#timerDisplay").textContent = txt;
+  $("#timerStart").textContent = timer.running ? "⏸️ Pause" : "▶️ Start";
+  document.title = timer.running ? `${txt} · LernFreund` : "LernFreund";
+  const t = activeTopic();
+  $("#timerInfo").textContent = timer.isBreak ? "Pause – steh auf, trink Wasser, beweg dich 🚶"
+    : t ? `Lernzeit für: ${t.subject} – ${t.topic}` : "";
+}
+
+function timerTick() {
+  timer.left = Math.max(0, Math.round((timer.endAt - Date.now()) / 1000));
+  if (timer.left === 0) {
+    clearInterval(timer.handle);
+    timer.running = false;
+    if (!timer.isBreak) {
+      logMinutes(Math.round(timer.total / 60));
+      renderOverview();
+      toast("🎉 Lerneinheit geschafft! Zeit für eine Pause.");
+    } else {
+      toast("⏰ Pause vorbei – weiter geht's!");
+    }
+    beep();
+    timer.left = timer.total;
+  }
+  renderTimer();
+}
+
+function beep() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 880;
+    osc.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch { /* kein Ton möglich */ }
+}
+
+$("#timerStart").addEventListener("click", () => {
+  if (timer.running) {
+    clearInterval(timer.handle);
+    timer.running = false;
+  } else {
+    timer.endAt = Date.now() + timer.left * 1000;
+    timer.handle = setInterval(timerTick, 250);
+    timer.running = true;
+  }
+  renderTimer();
+});
+$("#timerReset").addEventListener("click", () => {
+  clearInterval(timer.handle);
+  timer.running = false;
+  timer.left = timer.total;
+  renderTimer();
+});
+$("#timerModes").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b || timer.running) return;
+  document.querySelectorAll("#timerModes button").forEach((x) => x.classList.toggle("active", x === b));
+  timer.total = timer.left = Number(b.dataset.min) * 60;
+  timer.isBreak = !!b.dataset.break;
+  renderTimer();
+});
+
+// ---------- Notenrechner (Schweizer Skala 1–6) ----------
+
+function renderGrades() {
+  $("#gradeSubject").innerHTML = SUBJECTS.filter((s) => s !== "Andere…")
+    .concat(state.topics.map((t) => t.subject).filter((s) => !SUBJECTS.includes(s)))
+    .filter((s, i, a) => a.indexOf(s) === i)
+    .map((s) => `<option>${esc(s)}</option>`).join("");
+  const t = activeTopic();
+  if (t) $("#gradeSubject").value = t.subject;
+
+  const bySubject = {};
+  state.grades.forEach((g, i) => (bySubject[g.subject] = bySubject[g.subject] || []).push({ ...g, i }));
+  const subjects = Object.keys(bySubject);
+  if (!subjects.length) { $("#gradesView").innerHTML = `<div class="card empty">📊 Noch keine Noten eingetragen.</div>`; return; }
+
+  const avg = (list) => list.reduce((a, g) => a + g.grade * g.weight, 0) / list.reduce((a, g) => a + g.weight, 0);
+  const round = (x) => Math.round(x * 2) / 2; // Zeugnis: auf halbe Noten gerundet
+  const cls = (x) => (x >= 4 ? "good" : "bad");
+  const subjectAvgs = subjects.map((s) => round(avg(bySubject[s])));
+  const pluspunkte = subjectAvgs.reduce((a, x) => a + (x >= 4 ? x - 4 : 2 * (x - 4)), 0);
+
+  $("#gradesView").innerHTML = `
+    <div class="stats-grid">
+      <div class="stat"><div class="v ${cls(subjectAvgs.reduce((a, b) => a + b, 0) / subjectAvgs.length)}">${(subjectAvgs.reduce((a, b) => a + b, 0) / subjectAvgs.length).toFixed(2)}</div><div class="l">Gesamtschnitt</div></div>
+      <div class="stat"><div class="v ${pluspunkte >= 0 ? "good" : "bad"}">${pluspunkte >= 0 ? "+" : ""}${pluspunkte}</div><div class="l">Pluspunkte (Unterschreitungen doppelt)</div></div>
+    </div>
+    ${subjects.map((s) => {
+      const a = avg(bySubject[s]);
+      const sumW = bySubject[s].reduce((x, g) => x + g.weight, 0);
+      const need = (4 * (sumW + 1) - a * sumW); // nötige Note (einfach gewichtet) für Schnitt 4
+      return `<div class="card"><header class="row" style="justify-content:space-between"><h3>${esc(s)}</h3>
+        <span>Schnitt: <strong class="${cls(a)}">${a.toFixed(2)}</strong> → Zeugnis <strong>${round(a).toFixed(1)}</strong></span></header>
+        <table><tbody>${bySubject[s].map((g) => `<tr><td>${esc(g.label || "Note")}</td><td><strong class="${cls(g.grade)}">${g.grade}</strong></td>
+          <td class="muted">×${g.weight}</td><td style="text-align:right"><button class="btn ghost small" data-delgrade="${g.i}">✕</button></td></tr>`).join("")}</tbody></table>
+        ${a < 4 ? `<p class="muted">Für einen 4er-Schnitt brauchst du in der nächsten (einfachen) Prüfung mindestens eine <strong>${need <= 6 ? need.toFixed(2) : "6 – mehrere Prüfungen nötig"}</strong>.</p>` : ""}
+      </div>`;
+    }).join("")}`;
+}
+$("#gradeForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const grade = Number($("#gradeValue").value);
+  if (!(grade >= 1 && grade <= 6)) return toast("Noten gehen von 1 bis 6.");
+  state.grades.push({ subject: $("#gradeSubject").value, grade, weight: Number($("#gradeWeight").value), label: $("#gradeLabel").value.trim() });
+  save();
+  $("#gradeValue").value = ""; $("#gradeLabel").value = "";
+  renderGrades();
+});
+$("#gradesView").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-delgrade]");
+  if (!b) return;
+  state.grades.splice(Number(b.dataset.delgrade), 1);
+  save(); renderGrades();
+});
+
+// ---------- Start ----------
+
+function renderStreak() { $("#streak").textContent = `🔥 ${streakCount()}`; }
+
+function renderAll() {
+  renderTopicList();
+  renderActiveTopic();
+  renderOverview();
+  renderChat();
+  quiz = null; cardIndex = 0;
+  renderPlan();
+  renderQuiz();
+  renderCards();
+  renderGrades();
+  renderStreak();
+  renderTimer();
+}
+
+applyTheme();
+renderSubjects();
+renderAll();
+connectCloud();
+</script>

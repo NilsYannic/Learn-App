@@ -44,3 +44,10 @@ public/index.html  Oberfläche
 public/style.css   Design (inkl. Dunkelmodus und Handy-Ansicht)
 public/app.js      Logik im Browser
 ```
+
+## Web-Version (ohne Installation, ohne API-Schlüssel)
+
+Im Ordner `web/` liegt eine Version, die direkt auf claude.ai läuft: **https://claude.ai/artifact/GnLzgFJzAAd85mhnxanUs8**
+
+Der Coach nutzt dort dein eigenes Claude-Konto (beim ersten Mal auf „Erlauben“ klicken). Deine Daten werden privat in der App gespeichert.
+`web/index.html` ist die fertige Seite, `web/style.css` und `web/app.js` sind die Quelldateien dafür.
