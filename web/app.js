@@ -243,7 +243,7 @@ function formatDate(iso, opts = { weekday: "short", day: "numeric", month: "shor
 
 function requireTopic() {
   const t = activeTopic();
-  if (!t) toast("Wähle zuerst ein Fach und ein Thema aus 👈");
+  if (!t) { toast("Leg zuerst ein Thema an."); openTopicSheet(true); }
   return t;
 }
 
@@ -322,6 +322,7 @@ $("#topicForm").addEventListener("submit", (e) => {
   state.activeId = t.id;
   save();
   e.target.reset();
+  closeTopicSheet();
   renderAll();
   switchTab("coach");
   sendChat(`Hallo! Ich möchte "${topic}" in ${subject} lernen. Wo fangen wir an?`);
@@ -330,7 +331,7 @@ $("#topicForm").addEventListener("submit", (e) => {
 function renderTopicList() {
   const list = $("#topicList");
   if (!state.topics.length) {
-    list.innerHTML = `<li class="muted" style="cursor:default">Noch keine Themen – leg oben los! ✨</li>`;
+    list.innerHTML = `<li class="muted" style="cursor:default">Noch keine Themen. Leg dein erstes an! ✨</li>`;
     return;
   }
   list.innerHTML = state.topics.map((t) => {
@@ -354,20 +355,44 @@ $("#topicList").addEventListener("click", (e) => {
     return;
   }
   const li = e.target.closest("li[data-id]");
-  if (li) { state.activeId = li.dataset.id; save(); renderAll(); }
+  if (li) { state.activeId = li.dataset.id; save(); closeTopicSheet(); renderAll(); }
 });
+
+// Themen-Auswahl als Blatt (Handy: von unten, Computer: in der Mitte)
+function openTopicSheet(showForm = false) {
+  const form = showForm || !state.topics.length;
+  $("#topicFormWrap").hidden = !form;
+  $("#topicListWrap").hidden = form;
+  $("#sheetTitle").textContent = form ? "Neues Thema" : "Meine Themen";
+  $("#topicSheet").hidden = false;
+  if (form) $("#topicInput").focus();
+}
+function closeTopicSheet() { $("#topicSheet").hidden = true; }
+$("#topicSwitch").addEventListener("click", () => openTopicSheet(false));
+$("#newTopicBtn").addEventListener("click", () => openTopicSheet(true));
+$("#sheetClose").addEventListener("click", closeTopicSheet);
+$("#topicSheet").addEventListener("click", (e) => { if (e.target.id === "topicSheet") closeTopicSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#topicSheet").hidden) closeTopicSheet(); });
+
+function renderTopicSwitch() {
+  const t = activeTopic();
+  $("#tsSub").textContent = t ? t.subject : "Kein Thema";
+  $("#tsMain").textContent = t ? t.topic : "Thema wählen";
+}
 
 function renderActiveTopic() {
   const t = activeTopic();
   const el = $("#activeTopic");
   if (!t) {
     el.innerHTML = `<div><h1>Hoi! Was lernst du gerade? 👋</h1>
+      <button class="btn primary" id="firstTopic" style="margin-top:8px">＋ Erstes Thema anlegen</button>
       <ol class="steps">
         <li><strong>Fach wählen und Thema eingeben</strong>, z.B. Mathematik → Quadratische Gleichungen.</li>
         <li><strong>Mit Coach Lumi lernen:</strong> erklären lassen, üben, Prüfung simulieren.</li>
         <li><strong>Prüfungsdatum setzen</strong>, dann macht dir Lumi einen Lernplan bis dahin.</li>
       </ol>
       <p class="notice" style="margin-top:12px">Beim ersten Gespräch fragt Claude, ob die App dein Claude-Konto nutzen darf. Klick auf „Erlauben“.</p></div>`;
+    $("#firstTopic").addEventListener("click", () => openTopicSheet(true));
     return;
   }
   const d = daysUntil(t.examDate);
@@ -377,21 +402,42 @@ function renderActiveTopic() {
       : `<strong>${d === 0 ? "Heute!" : d}</strong><span class="muted">${d === 0 ? "Viel Erfolg! 🍀" : d === 1 ? "Tag bis zur Prüfung" : "Tage bis zur Prüfung"}</span>`;
   }
   el.innerHTML = `<div><span class="subject-badge">${esc(t.subject)}</span><h1>${esc(t.topic)}</h1>
-    <span class="muted">${esc(t.level)}</span></div><div class="countdown">${cd}</div>`;
+    <span class="muted">${esc(t.level)}</span></div><div class="countdown">${cd}</div>
+    <div class="quick-actions">
+      <button class="btn primary" data-go="coach">🤖 Mit Coach lernen</button>
+      <button class="btn" data-go="quiz">❓ Quiz</button>
+      <button class="btn" data-go="cards">🃏 Karten</button>
+    </div>`;
+  el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.go)));
   $("#setExam")?.addEventListener("click", () => { switchTab("plan"); $("#planExam").focus(); });
 }
 
 // ---------- Tabs ----------
 
+// Hauptbereiche; Lernplan/Quiz/Karten liegen unter "Lernen", Noten/Design unter "Mehr".
+const SUB_PARENT = { plan: "learn", quiz: "learn", cards: "learn", settings: "more", grades: "more" };
+
 function switchTab(name) {
-  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
-  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${name}`));
-  if (name === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
+  const main = SUB_PARENT[name] || name;
+  if (SUB_PARENT[name]) switchSub(main, name);
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === main));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
+  if (main === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
+  window.scrollTo({ top: 0 });
+}
+function switchSub(main, name) {
+  const panel = $(`#tab-${main}`);
+  panel.querySelectorAll(".segmented button").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
+  panel.querySelectorAll(".sub-panel").forEach((p) => (p.hidden = p.id !== `tab-${name}`));
 }
 $("#tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (b) switchTab(b.dataset.tab);
 });
+document.querySelectorAll(".segmented").forEach((seg) => seg.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sub]");
+  if (b) switchSub(SUB_PARENT[b.dataset.sub], b.dataset.sub);
+}));
 
 // ---------- Übersicht ----------
 
@@ -402,11 +448,9 @@ function renderOverview() {
   const t = activeTopic();
   const planProg = t?.plan ? planProgress(t) : null;
   $("#statsGrid").innerHTML = [
-    ["🔥", streakCount(), "Tage Lern-Serie"],
-    ["⏱️", totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`, "Lernzeit total"],
-    ["📚", state.topics.length, "Themen"],
-    ["❓", avgQuiz === null ? "–" : `${avgQuiz}%`, "Quiz-Schnitt"],
-    ["🗓️", planProg === null ? "–" : `${planProg}%`, "Lernplan (aktuelles Thema)"],
+    ["🔥", streakCount(), "Tage in Folge"],
+    ["⏱️", totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`, "Lernzeit"],
+    planProg === null ? ["❓", avgQuiz === null ? "–" : `${avgQuiz}%`, "Quiz-Schnitt"] : ["🗓️", `${planProg}%`, "Lernplan erledigt"],
   ].map(([i, v, l]) => `<div class="stat"><div class="v">${i} ${v}</div><div class="l">${l}</div></div>`).join("");
 
   // Heutige Aufgaben aus allen Lernplänen
@@ -424,6 +468,7 @@ function renderOverview() {
 
   const exams = state.topics.filter((x) => x.examDate && daysUntil(x.examDate) >= 0)
     .sort((a, b) => a.examDate.localeCompare(b.examDate));
+  $("#upcomingExams").closest(".card").hidden = !exams.length;
   $("#upcomingExams").innerHTML = exams.length ? `<table><tbody>${exams.map((x) => {
     const d = daysUntil(x.examDate);
     return `<tr><td>${formatDate(x.examDate)}</td><td><strong>${esc(x.subject)}</strong> – ${esc(x.topic)}</td>
@@ -579,6 +624,8 @@ function renderPlan() {
   $("#planExam").value = t?.examDate || "";
   $("#planExam").min = todayISO();
   const view = $("#planView");
+  $("#planFormCard").open = !t?.plan;
+  $("#planFormCard summary h2").textContent = t?.plan ? "Neuen Lernplan erstellen" : "Lernplan erstellen";
   if (!t) { view.innerHTML = ""; return; }
   if (!t.plan) {
     view.innerHTML = `<div class="card empty">🗓️ Noch kein Lernplan. Wähle dein Prüfungsdatum und der Coach erstellt dir einen persönlichen Plan.</div>`;
@@ -1111,6 +1158,7 @@ function renderMusic() {
   $("#musicToggle").textContent = music.playing ? "⏹️ Musik aus" : "🎵 Musik an";
   $("#musicVolume").value = Math.round(state.musicVolume * 100);
   $("#musicDesc").textContent = (MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi).desc;
+  $("#musicSummary").textContent = `${(MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi).name} · ${music.playing ? "läuft" : "aus"}`;
 }
 
 $("#musicToggle").addEventListener("click", () => (music.playing ? stopMusic() : startMusic()));
@@ -1262,6 +1310,7 @@ function renderAll() {
   applyDesign();
   renderSettings();
   renderMusic();
+  renderTopicSwitch();
   renderTopicList();
   renderActiveTopic();
   renderOverview();

@@ -294,64 +294,126 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
     var(--bg);
   background-size: 300px 300px, 400px 400px, 500px 500px, 350px 350px, auto;
 }
+
+/* ===== Übersichtliches Layout: eine Spalte, Navigation, Themen-Blatt ===== */
+.layout { display: block; max-width: 880px; padding-block: 20px 32px; padding-inline: 20px; }
+.topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; padding: 10px 20px; }
+.topic-switch {
+  justify-self: center; display: flex; align-items: center; gap: 8px; max-width: 360px; min-width: 0;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: 12px;
+  padding: 5px 12px; cursor: pointer; font: inherit; text-align: left;
+}
+.topic-switch:hover { border-color: var(--primary); }
+.ts-text { display: grid; min-width: 0; line-height: 1.2; }
+.ts-sub { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+.ts-main { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ts-caret { color: var(--muted); }
+
+.tabs { gap: 6px; margin-bottom: 18px; }
+.tabs button { display: flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.95rem; }
+.tab-panel > .card:last-child, .sub-panel > .card:last-child { margin-bottom: 0; }
+
+.segmented { display: flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 16px; }
+.segmented button { flex: 1; border: none; background: none; color: var(--muted); padding: 8px 6px; border-radius: 9px; cursor: pointer; font: inherit; font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+.segmented button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+
+.active-topic { align-items: flex-start; }
+.quick-actions { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; padding-top: 4px; }
+.stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat { padding: 12px; }
+.stat .v { font-size: 1.35rem; }
+
+details.collapsible > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+details.collapsible > summary::-webkit-details-marker { display: none; }
+details.collapsible > summary h2 { margin: 0; }
+details.collapsible > summary::after { content: "▾"; color: var(--muted); }
+details.collapsible[open] > summary::after { content: "▴"; }
+details.collapsible[open] > summary { margin-bottom: 10px; }
+details.collapsible > summary .muted { margin-left: auto; }
+
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(5, 15, 10, 0.5); z-index: 25; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.sheet { background: var(--surface); color: var(--text); width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; border-radius: 18px; padding: 18px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.sheet-head h2 { margin: 0; }
+.topic-list { margin-bottom: 12px; }
+.topic-list li { padding: 10px 12px; border: 1px solid var(--border); }
+
+/* ===== Handy ===== */
+@media (max-width: 700px) {
+  body { font-size: 15px; }
+  .layout { padding-block: 12px 96px; padding-inline: 16px; }
+  .topbar { padding: 8px 16px; gap: 8px; }
+  .brand { font-size: 0; }
+  .brand .dot { width: 14px; height: 14px; margin: 0; }
+  .topic-switch { justify-self: stretch; max-width: none; }
+  .streak { padding: 3px 8px; font-size: 0.9rem; }
+
+  .tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; margin: 0; overflow: visible;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .tabs button { flex-direction: column; gap: 2px; border: none; background: none; border-radius: 10px; padding: 4px 2px; font-size: 0.72rem; color: var(--muted); }
+  .tabs button .ti { font-size: 1.25rem; line-height: 1.1; }
+  .tabs button.active { background: var(--primary-soft); color: var(--primary); border: none; }
+
+  .card { padding: 14px; margin-bottom: 12px; }
+  .active-topic h1 { font-size: 1.2rem; }
+  .countdown { text-align: left; }
+  .quick-actions .btn { flex: 1 1 auto; }
+  .stats-grid { gap: 8px; margin-bottom: 12px; }
+  .stat .v { font-size: 1.1rem; }
+  .stat .l { font-size: 0.75rem; }
+
+  .modes { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; margin-inline: -4px; padding-inline: 4px; }
+  .modes button { flex: none; }
+  .chat { min-height: 45vh; max-height: 55vh; }
+  .msg { max-width: 92%; }
+  .quick { flex-wrap: nowrap; overflow-x: auto; }
+  .quick button { flex: none; }
+  .chat-input textarea { font-size: 16px; }
+  input, select, textarea { font-size: 16px; }
+
+  .timer-display { font-size: 3.6rem; margin: 12px 0; }
+  .flashcard { height: 200px; }
+  .week-chart { height: 110px; gap: 6px; }
+
+  .sheet-backdrop { align-items: flex-end; padding: 0; }
+  .sheet { max-width: none; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 90vh; }
+  .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}
+
+.quick-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.quick-actions .btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-inline: 8px; }
+@media (max-width: 700px) { .quick-actions { grid-template-columns: 1fr 1fr; } .quick-actions .btn:first-child { grid-column: span 2; } }
 </style>
 <header class="topbar">
-    <div class="brand"><span class="dot"></span>Lern<span>Freund</span><span class="brand-sub">mit Coach Lumi</span></div>
+    <div class="brand"><span class="dot"></span>Lern<span>Freund</span></div>
+    <button class="topic-switch" id="topicSwitch" type="button" aria-haspopup="dialog">
+      <span class="ts-text"><span class="ts-sub" id="tsSub">Thema</span><span class="ts-main" id="tsMain">Thema wählen</span></span>
+      <span class="ts-caret" aria-hidden="true">▾</span>
+    </button>
     <div class="topbar-right">
       <span class="streak" id="streak" title="Lern-Serie: Tage in Folge gelernt">🔥 0</span>
-      <button class="icon-btn" id="themeToggle" title="Hell/Dunkel umschalten">🌓</button>
+      <button class="icon-btn" id="themeToggle" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten">🌓</button>
     </div>
   </header>
 
   <main class="layout">
-    <!-- Seitenleiste: Fach & Thema wählen -->
-    <aside class="sidebar">
-      <section class="card">
-        <h2>Neues Thema</h2>
-        <form id="topicForm">
-          <label>Fach</label>
-          <div class="subjects" id="subjects"></div>
-          <input id="customSubject" class="hidden" placeholder="Eigenes Fach eingeben">
-          <label for="topicInput">Thema</label>
-          <input id="topicInput" required placeholder="z.B. Quadratische Gleichungen">
-          <label for="levelInput">Wie gut kannst du es schon?</label>
-          <select id="levelInput">
-            <option>Ich fange bei null an</option>
-            <option selected>Ich kenne die Grundlagen</option>
-            <option>Ich kann es schon recht gut</option>
-          </select>
-          <label for="examInput">Prüfungsdatum (optional)</label>
-          <input id="examInput" type="date">
-          <label for="goalInput">Notizen für den Coach (optional)</label>
-          <textarea id="goalInput" rows="2" placeholder="z.B. Ich verstehe die Mitternachtsformel nicht"></textarea>
-          <button class="btn primary full" type="submit">✨ Thema dem Coach geben</button>
-        </form>
-      </section>
-
-      <section class="card">
-        <h2>Meine Themen</h2>
-        <ul class="topic-list" id="topicList"></ul>
-      </section>
-    </aside>
-
-    <!-- Hauptbereich -->
     <section class="content">
-      <div class="active-topic card" id="activeTopic"></div>
-      <div class="quote-banner" id="quoteBanner" hidden></div>
-
-      <nav class="tabs" id="tabs">
-        <button data-tab="overview" class="active">🏠 Übersicht</button>
-        <button data-tab="coach">🤖 Coach</button>
-        <button data-tab="plan">🗓️ Lernplan</button>
-        <button data-tab="quiz">❓ Quiz</button>
-        <button data-tab="cards">🃏 Karteikarten</button>
-        <button data-tab="timer">⏱️ Timer</button>
-        <button data-tab="grades">📊 Noten</button>
-        <button data-tab="settings">⚙️ Einstellungen</button>
+      <nav class="tabs" id="tabs" aria-label="Bereiche">
+        <button data-tab="overview" class="active"><span class="ti">🏠</span><span class="tl">Start</span></button>
+        <button data-tab="coach"><span class="ti">🤖</span><span class="tl">Coach</span></button>
+        <button data-tab="learn"><span class="ti">📚</span><span class="tl">Lernen</span></button>
+        <button data-tab="timer"><span class="ti">⏱️</span><span class="tl">Timer</span></button>
+        <button data-tab="more"><span class="ti">⚙️</span><span class="tl">Mehr</span></button>
       </nav>
 
       <!-- Übersicht -->
       <div class="tab-panel" id="tab-overview">
+        <div class="active-topic card" id="activeTopic"></div>
+        <div class="quote-banner" id="quoteBanner" hidden></div>
         <div class="stats-grid" id="statsGrid"></div>
         <div class="card">
           <h2>Heute zu tun</h2>
@@ -380,7 +442,7 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
           <div class="chat" id="chat"></div>
           <div class="quick" id="quickPrompts"></div>
           <form class="chat-input" id="chatForm">
-            <textarea id="chatInput" rows="2" placeholder="Frag deinen Coach etwas… (Enter = senden, Shift+Enter = neue Zeile)"></textarea>
+            <textarea id="chatInput" rows="2" placeholder="Frag deinen Coach etwas…"></textarea>
             <button class="btn" type="button" id="stopBtn" hidden>Stopp</button>
             <button class="btn primary" type="submit" id="sendBtn">Senden</button>
           </form>
@@ -388,10 +450,17 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
         </div>
       </div>
 
-      <!-- Lernplan -->
-      <div class="tab-panel hidden" id="tab-plan">
-        <div class="card">
-          <h2>Lernplan erstellen</h2>
+      <!-- Lernen: Lernplan, Quiz, Karteikarten -->
+      <div class="tab-panel hidden" id="tab-learn">
+        <div class="segmented" role="tablist">
+          <button data-sub="plan" class="active">🗓️ Lernplan</button>
+          <button data-sub="quiz">❓ Quiz</button>
+          <button data-sub="cards">🃏 Karten</button>
+        </div>
+        <!-- Lernplan -->
+      <div class="sub-panel" id="tab-plan">
+        <details class="card collapsible" id="planFormCard" open>
+          <summary><h2>Lernplan erstellen</h2></summary>
           <form id="planForm" class="grid-form">
             <div><label for="planExam">Prüfungsdatum</label><input id="planExam" type="date" required></div>
             <div><label for="planMinutes">Minuten pro Tag</label>
@@ -402,12 +471,11 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
               <input id="planBusy" placeholder="z.B. Mittwoch Training, Samstag frei"></div>
             <button class="btn primary span2" type="submit" id="planBtn">🗓️ Plan vom Coach erstellen lassen</button>
           </form>
-        </div>
+        </details>
         <div id="planView"></div>
       </div>
-
-      <!-- Quiz -->
-      <div class="tab-panel hidden" id="tab-quiz">
+        <!-- Quiz -->
+      <div class="sub-panel" id="tab-quiz" hidden>
         <div class="card">
           <h2>Teste dein Wissen</h2>
           <form id="quizForm" class="grid-form">
@@ -420,9 +488,8 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
         </div>
         <div id="quizView"></div>
       </div>
-
-      <!-- Karteikarten -->
-      <div class="tab-panel hidden" id="tab-cards">
+        <!-- Karteikarten -->
+      <div class="sub-panel" id="tab-cards" hidden>
         <div class="card">
           <h2>Karteikarten</h2>
           <p class="muted">Der Coach erstellt Karten. Karten, die du nicht wusstest, kommen öfter dran.</p>
@@ -439,6 +506,7 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
           </form>
         </div>
         <div id="cardsView"></div>
+      </div>
       </div>
 
       <!-- Timer -->
@@ -459,20 +527,26 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
           </div>
           <p class="muted center" id="timerInfo"></p>
         </div>
-        <div class="card music-card">
-          <h2>Musik zum Lernen</h2>
-          <p class="muted">Die Musik wird live in deinem Browser erzeugt. Sie startet automatisch mit dem Lern-Timer (in den Einstellungen änderbar).</p>
+        <details class="card collapsible music-card" id="musicCard">
+          <summary><h2>🎵 Musik zum Lernen</h2><span class="muted" id="musicSummary"></span></summary>
+          <p class="muted">Startet automatisch mit dem Lern-Timer (änderbar unter Mehr → Design).</p>
           <div class="timer-modes music-styles" id="musicStyles"></div>
           <p class="muted center" id="musicDesc"></p>
           <div class="row center music-controls">
             <button class="btn primary" id="musicToggle" type="button">🎵 Musik an</button>
             <label class="volume" for="musicVolume">🔈 <input id="musicVolume" type="range" min="0" max="100" step="5"> 🔊</label>
           </div>
-        </div>
+        </details>
       </div>
 
-      <!-- Einstellungen -->
-      <div class="tab-panel hidden" id="tab-settings">
+      <!-- Mehr: Noten und Einstellungen -->
+      <div class="tab-panel hidden" id="tab-more">
+        <div class="segmented" role="tablist">
+          <button data-sub="settings" class="active">🎨 Design</button>
+          <button data-sub="grades">📊 Noten</button>
+        </div>
+        <!-- Einstellungen -->
+      <div class="sub-panel" id="tab-settings">
         <div class="card">
           <h2>Design</h2>
           <div class="design-grid" id="designGrid"></div>
@@ -483,9 +557,8 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
           <label class="switch"><input type="checkbox" id="setPilotQuotes"> Pilotensprüche auch in den anderen Designs zeigen</label>
         </div>
       </div>
-
-      <!-- Noten -->
-      <div class="tab-panel hidden" id="tab-grades">
+        <!-- Noten -->
+      <div class="sub-panel" id="tab-grades" hidden>
         <div class="card">
           <h2>Notenrechner</h2>
           <form id="gradeForm" class="grid-form">
@@ -499,8 +572,43 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
         </div>
         <div id="gradesView"></div>
       </div>
+      </div>
     </section>
   </main>
+
+  <!-- Themen-Auswahl (unten aufklappend auf dem Handy) -->
+  <div class="sheet-backdrop" id="topicSheet" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-head">
+        <h2 id="sheetTitle">Meine Themen</h2>
+        <button class="icon-btn" id="sheetClose" type="button" aria-label="Schliessen">✕</button>
+      </div>
+      <div id="topicListWrap">
+        <ul class="topic-list" id="topicList"></ul>
+        <button class="btn primary full" id="newTopicBtn" type="button">＋ Neues Thema</button>
+      </div>
+      <div id="topicFormWrap" hidden>
+        <form id="topicForm">
+          <label>Fach</label>
+          <div class="subjects" id="subjects"></div>
+          <input id="customSubject" class="hidden" placeholder="Eigenes Fach eingeben">
+          <label for="topicInput">Thema</label>
+          <input id="topicInput" required placeholder="z.B. Quadratische Gleichungen">
+          <label for="levelInput">Wie gut kannst du es schon?</label>
+          <select id="levelInput">
+            <option>Ich fange bei null an</option>
+            <option selected>Ich kenne die Grundlagen</option>
+            <option>Ich kann es schon recht gut</option>
+          </select>
+          <label for="examInput">Prüfungsdatum (optional)</label>
+          <input id="examInput" type="date">
+          <label for="goalInput">Notizen für den Coach (optional)</label>
+          <textarea id="goalInput" rows="2" placeholder="z.B. Ich verstehe die Mitternachtsformel nicht"></textarea>
+          <button class="btn primary full" type="submit">✨ Thema dem Coach geben</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <div class="toast hidden" id="toast"></div>
   <div class="dialog-backdrop" id="dialog" hidden>
@@ -509,7 +617,8 @@ th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--bord
       <div class="row"><button class="btn" id="dialogCancel">Abbrechen</button><button class="btn primary" id="dialogOk">Ja</button></div>
     </div>
   </div>
-  <script>
+
+<script>
 // LernFreund – läuft als Claude-Artifact. Der KI-Coach nutzt das Claude-Konto der Person,
 // Daten werden im Artifact-Speicher (db) und als Reserve im Browser gespeichert.
 "use strict";
@@ -755,7 +864,7 @@ function formatDate(iso, opts = { weekday: "short", day: "numeric", month: "shor
 
 function requireTopic() {
   const t = activeTopic();
-  if (!t) toast("Wähle zuerst ein Fach und ein Thema aus 👈");
+  if (!t) { toast("Leg zuerst ein Thema an."); openTopicSheet(true); }
   return t;
 }
 
@@ -834,6 +943,7 @@ $("#topicForm").addEventListener("submit", (e) => {
   state.activeId = t.id;
   save();
   e.target.reset();
+  closeTopicSheet();
   renderAll();
   switchTab("coach");
   sendChat(`Hallo! Ich möchte "${topic}" in ${subject} lernen. Wo fangen wir an?`);
@@ -842,7 +952,7 @@ $("#topicForm").addEventListener("submit", (e) => {
 function renderTopicList() {
   const list = $("#topicList");
   if (!state.topics.length) {
-    list.innerHTML = `<li class="muted" style="cursor:default">Noch keine Themen – leg oben los! ✨</li>`;
+    list.innerHTML = `<li class="muted" style="cursor:default">Noch keine Themen. Leg dein erstes an! ✨</li>`;
     return;
   }
   list.innerHTML = state.topics.map((t) => {
@@ -866,20 +976,44 @@ $("#topicList").addEventListener("click", (e) => {
     return;
   }
   const li = e.target.closest("li[data-id]");
-  if (li) { state.activeId = li.dataset.id; save(); renderAll(); }
+  if (li) { state.activeId = li.dataset.id; save(); closeTopicSheet(); renderAll(); }
 });
+
+// Themen-Auswahl als Blatt (Handy: von unten, Computer: in der Mitte)
+function openTopicSheet(showForm = false) {
+  const form = showForm || !state.topics.length;
+  $("#topicFormWrap").hidden = !form;
+  $("#topicListWrap").hidden = form;
+  $("#sheetTitle").textContent = form ? "Neues Thema" : "Meine Themen";
+  $("#topicSheet").hidden = false;
+  if (form) $("#topicInput").focus();
+}
+function closeTopicSheet() { $("#topicSheet").hidden = true; }
+$("#topicSwitch").addEventListener("click", () => openTopicSheet(false));
+$("#newTopicBtn").addEventListener("click", () => openTopicSheet(true));
+$("#sheetClose").addEventListener("click", closeTopicSheet);
+$("#topicSheet").addEventListener("click", (e) => { if (e.target.id === "topicSheet") closeTopicSheet(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#topicSheet").hidden) closeTopicSheet(); });
+
+function renderTopicSwitch() {
+  const t = activeTopic();
+  $("#tsSub").textContent = t ? t.subject : "Kein Thema";
+  $("#tsMain").textContent = t ? t.topic : "Thema wählen";
+}
 
 function renderActiveTopic() {
   const t = activeTopic();
   const el = $("#activeTopic");
   if (!t) {
     el.innerHTML = `<div><h1>Hoi! Was lernst du gerade? 👋</h1>
+      <button class="btn primary" id="firstTopic" style="margin-top:8px">＋ Erstes Thema anlegen</button>
       <ol class="steps">
         <li><strong>Fach wählen und Thema eingeben</strong>, z.B. Mathematik → Quadratische Gleichungen.</li>
         <li><strong>Mit Coach Lumi lernen:</strong> erklären lassen, üben, Prüfung simulieren.</li>
         <li><strong>Prüfungsdatum setzen</strong>, dann macht dir Lumi einen Lernplan bis dahin.</li>
       </ol>
       <p class="notice" style="margin-top:12px">Beim ersten Gespräch fragt Claude, ob die App dein Claude-Konto nutzen darf. Klick auf „Erlauben“.</p></div>`;
+    $("#firstTopic").addEventListener("click", () => openTopicSheet(true));
     return;
   }
   const d = daysUntil(t.examDate);
@@ -889,21 +1023,42 @@ function renderActiveTopic() {
       : `<strong>${d === 0 ? "Heute!" : d}</strong><span class="muted">${d === 0 ? "Viel Erfolg! 🍀" : d === 1 ? "Tag bis zur Prüfung" : "Tage bis zur Prüfung"}</span>`;
   }
   el.innerHTML = `<div><span class="subject-badge">${esc(t.subject)}</span><h1>${esc(t.topic)}</h1>
-    <span class="muted">${esc(t.level)}</span></div><div class="countdown">${cd}</div>`;
+    <span class="muted">${esc(t.level)}</span></div><div class="countdown">${cd}</div>
+    <div class="quick-actions">
+      <button class="btn primary" data-go="coach">🤖 Mit Coach lernen</button>
+      <button class="btn" data-go="quiz">❓ Quiz</button>
+      <button class="btn" data-go="cards">🃏 Karten</button>
+    </div>`;
+  el.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.go)));
   $("#setExam")?.addEventListener("click", () => { switchTab("plan"); $("#planExam").focus(); });
 }
 
 // ---------- Tabs ----------
 
+// Hauptbereiche; Lernplan/Quiz/Karten liegen unter "Lernen", Noten/Design unter "Mehr".
+const SUB_PARENT = { plan: "learn", quiz: "learn", cards: "learn", settings: "more", grades: "more" };
+
 function switchTab(name) {
-  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
-  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${name}`));
-  if (name === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
+  const main = SUB_PARENT[name] || name;
+  if (SUB_PARENT[name]) switchSub(main, name);
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === main));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
+  if (main === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
+  window.scrollTo({ top: 0 });
+}
+function switchSub(main, name) {
+  const panel = $(`#tab-${main}`);
+  panel.querySelectorAll(".segmented button").forEach((b) => b.classList.toggle("active", b.dataset.sub === name));
+  panel.querySelectorAll(".sub-panel").forEach((p) => (p.hidden = p.id !== `tab-${name}`));
 }
 $("#tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (b) switchTab(b.dataset.tab);
 });
+document.querySelectorAll(".segmented").forEach((seg) => seg.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sub]");
+  if (b) switchSub(SUB_PARENT[b.dataset.sub], b.dataset.sub);
+}));
 
 // ---------- Übersicht ----------
 
@@ -914,11 +1069,9 @@ function renderOverview() {
   const t = activeTopic();
   const planProg = t?.plan ? planProgress(t) : null;
   $("#statsGrid").innerHTML = [
-    ["🔥", streakCount(), "Tage Lern-Serie"],
-    ["⏱️", totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`, "Lernzeit total"],
-    ["📚", state.topics.length, "Themen"],
-    ["❓", avgQuiz === null ? "–" : `${avgQuiz}%`, "Quiz-Schnitt"],
-    ["🗓️", planProg === null ? "–" : `${planProg}%`, "Lernplan (aktuelles Thema)"],
+    ["🔥", streakCount(), "Tage in Folge"],
+    ["⏱️", totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`, "Lernzeit"],
+    planProg === null ? ["❓", avgQuiz === null ? "–" : `${avgQuiz}%`, "Quiz-Schnitt"] : ["🗓️", `${planProg}%`, "Lernplan erledigt"],
   ].map(([i, v, l]) => `<div class="stat"><div class="v">${i} ${v}</div><div class="l">${l}</div></div>`).join("");
 
   // Heutige Aufgaben aus allen Lernplänen
@@ -936,6 +1089,7 @@ function renderOverview() {
 
   const exams = state.topics.filter((x) => x.examDate && daysUntil(x.examDate) >= 0)
     .sort((a, b) => a.examDate.localeCompare(b.examDate));
+  $("#upcomingExams").closest(".card").hidden = !exams.length;
   $("#upcomingExams").innerHTML = exams.length ? `<table><tbody>${exams.map((x) => {
     const d = daysUntil(x.examDate);
     return `<tr><td>${formatDate(x.examDate)}</td><td><strong>${esc(x.subject)}</strong> – ${esc(x.topic)}</td>
@@ -1091,6 +1245,8 @@ function renderPlan() {
   $("#planExam").value = t?.examDate || "";
   $("#planExam").min = todayISO();
   const view = $("#planView");
+  $("#planFormCard").open = !t?.plan;
+  $("#planFormCard summary h2").textContent = t?.plan ? "Neuen Lernplan erstellen" : "Lernplan erstellen";
   if (!t) { view.innerHTML = ""; return; }
   if (!t.plan) {
     view.innerHTML = `<div class="card empty">🗓️ Noch kein Lernplan. Wähle dein Prüfungsdatum und der Coach erstellt dir einen persönlichen Plan.</div>`;
@@ -1623,6 +1779,7 @@ function renderMusic() {
   $("#musicToggle").textContent = music.playing ? "⏹️ Musik aus" : "🎵 Musik an";
   $("#musicVolume").value = Math.round(state.musicVolume * 100);
   $("#musicDesc").textContent = (MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi).desc;
+  $("#musicSummary").textContent = `${(MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi).name} · ${music.playing ? "läuft" : "aus"}`;
 }
 
 $("#musicToggle").addEventListener("click", () => (music.playing ? stopMusic() : startMusic()));
@@ -1774,6 +1931,7 @@ function renderAll() {
   applyDesign();
   renderSettings();
   renderMusic();
+  renderTopicSwitch();
   renderTopicList();
   renderActiveTopic();
   renderOverview();
