@@ -1,0 +1,10 @@
+{
+  "name": "LernFreund",
+  "short_name": "LernFreund",
+  "lang": "de-CH",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f5fb",
+  "theme_color": "#5b5bd6",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

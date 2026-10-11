@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LernFreund</title>
+  <meta name="theme-color" content="#5b5bd6">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">📚 <span>LernFreund</span></div>
+    <div class="topbar-right">
+      <span class="streak" id="streak" title="Lern-Serie: Tage in Folge gelernt">🔥 0</span>
+      <button class="icon-btn" id="themeToggle" title="Hell/Dunkel umschalten">🌓</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Seitenleiste: Fach & Thema wählen -->
+    <aside class="sidebar">
+      <section class="card">
+        <h2>Neues Thema</h2>
+        <form id="topicForm">
+          <label>Fach</label>
+          <div class="subjects" id="subjects"></div>
+          <input id="customSubject" class="hidden" placeholder="Eigenes Fach eingeben">
+          <label for="topicInput">Thema</label>
+          <input id="topicInput" required placeholder="z.B. Quadratische Gleichungen">
+          <label for="levelInput">Wie gut kannst du es schon?</label>
+          <select id="levelInput">
+            <option>Ich fange bei null an</option>
+            <option selected>Ich kenne die Grundlagen</option>
+            <option>Ich kann es schon recht gut</option>
+          </select>
+          <label for="examInput">Prüfungsdatum (optional)</label>
+          <input id="examInput" type="date">
+          <label for="goalInput">Notizen für den Coach (optional)</label>
+          <textarea id="goalInput" rows="2" placeholder="z.B. Ich verstehe die Mitternachtsformel nicht"></textarea>
+          <button class="btn primary full" type="submit">✨ Thema dem Coach geben</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Meine Themen</h2>
+        <ul class="topic-list" id="topicList"></ul>
+      </section>
+    </aside>
+
+    <!-- Hauptbereich -->
+    <section class="content">
+      <div class="active-topic card" id="activeTopic"></div>
+
+      <nav class="tabs" id="tabs">
+        <button data-tab="overview" class="active">🏠 Übersicht</button>
+        <button data-tab="coach">🤖 Coach</button>
+        <button data-tab="plan">🗓️ Lernplan</button>
+        <button data-tab="quiz">❓ Quiz</button>
+        <button data-tab="cards">🃏 Karteikarten</button>
+        <button data-tab="timer">⏱️ Timer</button>
+        <button data-tab="grades">📊 Noten</button>
+      </nav>
+
+      <!-- Übersicht -->
+      <div class="tab-panel" id="tab-overview">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="card">
+          <h2>Heute zu tun</h2>
+          <div id="todayTasks"></div>
+        </div>
+        <div class="card">
+          <h2>Anstehende Prüfungen</h2>
+          <div id="upcomingExams"></div>
+        </div>
+        <div class="card">
+          <h2>Lernzeit der letzten 7 Tage</h2>
+          <div class="week-chart" id="weekChart"></div>
+        </div>
+      </div>
+
+      <!-- Coach-Chat -->
+      <div class="tab-panel hidden" id="tab-coach">
+        <div class="card chat-card">
+          <div class="modes" id="modes">
+            <button data-mode="erklaeren" class="active" title="Thema Schritt für Schritt erklärt bekommen">💡 Erklären</button>
+            <button data-mode="ueben" title="Übungsaufgaben lösen">✏️ Üben</button>
+            <button data-mode="pruefen" title="Wie in einer echten Prüfung">📝 Prüfung</button>
+            <button data-mode="zusammenfassen" title="Kompakte Zusammenfassung">📄 Zusammenfassung</button>
+            <button data-mode="feynman" title="Erkläre es in eigenen Worten">🧠 Feynman</button>
+          </div>
+          <div class="chat" id="chat"></div>
+          <div class="quick" id="quickPrompts"></div>
+          <form class="chat-input" id="chatForm">
+            <textarea id="chatInput" rows="2" placeholder="Frag deinen Coach etwas… (Enter = senden, Shift+Enter = neue Zeile)"></textarea>
+            <button class="btn primary" type="submit" id="sendBtn">Senden</button>
+          </form>
+          <div class="row-end"><button class="btn ghost small" id="clearChat">🗑️ Chat leeren</button></div>
+        </div>
+      </div>
+
+      <!-- Lernplan -->
+      <div class="tab-panel hidden" id="tab-plan">
+        <div class="card">
+          <h2>Lernplan erstellen</h2>
+          <form id="planForm" class="grid-form">
+            <div><label for="planExam">Prüfungsdatum</label><input id="planExam" type="date" required></div>
+            <div><label for="planMinutes">Minuten pro Tag</label>
+              <select id="planMinutes"><option>15</option><option selected>30</option><option>45</option><option>60</option><option>90</option></select></div>
+            <div><label for="planDays">Lerntage pro Woche</label>
+              <select id="planDays"><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select></div>
+            <div class="span2"><label for="planBusy">Besondere Tage (optional)</label>
+              <input id="planBusy" placeholder="z.B. Mittwoch Training, Samstag frei"></div>
+            <button class="btn primary span2" type="submit" id="planBtn">🗓️ Plan vom Coach erstellen lassen</button>
+          </form>
+        </div>
+        <div id="planView"></div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="tab-panel hidden" id="tab-quiz">
+        <div class="card">
+          <h2>Teste dein Wissen</h2>
+          <form id="quizForm" class="grid-form">
+            <div><label for="quizCount">Anzahl Fragen</label>
+              <select id="quizCount"><option>5</option><option selected>8</option><option>10</option></select></div>
+            <div><label for="quizDiff">Schwierigkeit</label>
+              <select id="quizDiff"><option>leicht</option><option selected>mittel</option><option>schwer</option></select></div>
+            <button class="btn primary span2" type="submit" id="quizBtn">❓ Neues Quiz starten</button>
+          </form>
+        </div>
+        <div id="quizView"></div>
+      </div>
+
+      <!-- Karteikarten -->
+      <div class="tab-panel hidden" id="tab-cards">
+        <div class="card">
+          <h2>Karteikarten</h2>
+          <p class="muted">Der Coach erstellt Karten. Karten, die du nicht wusstest, kommen öfter dran.</p>
+          <div class="row">
+            <button class="btn primary" id="cardsBtn">🃏 Karten erstellen lassen</button>
+            <button class="btn" id="addCardBtn">➕ Eigene Karte</button>
+          </div>
+        </div>
+        <div id="cardsView"></div>
+      </div>
+
+      <!-- Timer -->
+      <div class="tab-panel hidden" id="tab-timer">
+        <div class="card timer-card">
+          <h2>Pomodoro-Timer</h2>
+          <p class="muted">Konzentriert lernen, dann kurz Pause. Deine Lernzeit wird automatisch gezählt.</p>
+          <div class="timer-modes" id="timerModes">
+            <button data-min="25" class="active">Lernen 25</button>
+            <button data-min="50">Lernen 50</button>
+            <button data-min="5" data-break="1">Pause 5</button>
+            <button data-min="15" data-break="1">Pause 15</button>
+          </div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="row center">
+            <button class="btn primary" id="timerStart">▶️ Start</button>
+            <button class="btn" id="timerReset">↺ Zurücksetzen</button>
+          </div>
+          <p class="muted center" id="timerInfo"></p>
+        </div>
+      </div>
+
+      <!-- Noten -->
+      <div class="tab-panel hidden" id="tab-grades">
+        <div class="card">
+          <h2>Notenrechner</h2>
+          <form id="gradeForm" class="grid-form">
+            <div><label for="gradeSubject">Fach</label><select id="gradeSubject"></select></div>
+            <div><label for="gradeValue">Note (1–6)</label><input id="gradeValue" type="number" min="1" max="6" step="0.25" required></div>
+            <div><label for="gradeWeight">Gewichtung</label>
+              <select id="gradeWeight"><option value="1">einfach</option><option value="0.5">halb</option><option value="2">doppelt</option></select></div>
+            <div><label for="gradeLabel">Bezeichnung</label><input id="gradeLabel" placeholder="z.B. Test Algebra"></div>
+            <button class="btn primary span2" type="submit">➕ Note hinzufügen</button>
+          </form>
+        </div>
+        <div id="gradesView"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

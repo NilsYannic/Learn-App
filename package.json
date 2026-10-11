@@ -1,0 +1,26 @@
+{
+  "name": "lernfreund",
+  "version": "1.0.0",
+  "description": "Lern-App mit KI-Lerncoach, Lernplan, Quiz, Karteikarten, Pomodoro-Timer und Notenrechner",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NilsYannic/Learn-App.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NilsYannic/Learn-App/issues"
+  },
+  "homepage": "https://github.com/NilsYannic/Learn-App#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "zod": "^4.6.5"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
