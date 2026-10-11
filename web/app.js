@@ -41,8 +41,10 @@ function topicContext(t) {
 
 // ---------- Zustand ----------
 
+const DEFAULT_SETTINGS = { design: "tafel", musicStyle: "lofi", musicVolume: 0.6, musicAuto: true, pilotQuotes: false };
+
 function emptyState() {
-  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null };
+  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null, ...DEFAULT_SETTINGS };
 }
 function loadLocal() {
   try {
@@ -61,7 +63,8 @@ function topicDoc(t) {
   return { ...t, chat: t.chat.slice(-MAX_CHAT) };
 }
 function metaDoc() {
-  return { activeId: state.activeId, minutesByDay: state.minutesByDay, grades: state.grades, theme: state.theme, order: state.topics.map((t) => t.id) };
+  const settings = Object.fromEntries(Object.keys(DEFAULT_SETTINGS).map((k) => [k, state[k]]));
+  return { activeId: state.activeId, minutesByDay: state.minutesByDay, grades: state.grades, theme: state.theme, ...settings, order: state.topics.map((t) => t.id) };
 }
 
 function save() {
@@ -119,6 +122,7 @@ async function connectCloud() {
     if (meta) {
       state.activeId = meta.activeId; state.minutesByDay = meta.minutesByDay || {};
       state.grades = meta.grades || []; state.theme = meta.theme || null;
+      for (const k of Object.keys(DEFAULT_SETTINGS)) state[k] = meta[k] ?? DEFAULT_SETTINGS[k];
     }
     cloud.col = col;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* egal */ }
@@ -911,29 +915,38 @@ function timerTick() {
 
 function beep() {
   try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    osc.frequency.value = 880;
-    osc.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.4);
+    const ctx = music.ctx || new AudioContext();
+    [0, 0.18, 0.36].forEach((d, i) => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.frequency.value = [660, 880, 1320][i];
+      g.gain.setValueAtTime(0.25, ctx.currentTime + d);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.3);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(ctx.currentTime + d);
+      osc.stop(ctx.currentTime + d + 0.32);
+    });
   } catch { /* kein Ton möglich */ }
 }
 
+function startTimer() {
+  timer.endAt = Date.now() + timer.left * 1000;
+  timer.handle = setInterval(timerTick, 250);
+  timer.running = true;
+  if (state.musicAuto && !timer.isBreak) startMusic();
+}
+function stopTimer() {
+  clearInterval(timer.handle);
+  timer.running = false;
+  if (state.musicAuto) stopMusic();
+}
+
 $("#timerStart").addEventListener("click", () => {
-  if (timer.running) {
-    clearInterval(timer.handle);
-    timer.running = false;
-  } else {
-    timer.endAt = Date.now() + timer.left * 1000;
-    timer.handle = setInterval(timerTick, 250);
-    timer.running = true;
-  }
+  if (timer.running) stopTimer();
+  else startTimer();
   renderTimer();
 });
 $("#timerReset").addEventListener("click", () => {
-  clearInterval(timer.handle);
-  timer.running = false;
+  stopTimer();
   timer.left = timer.total;
   renderTimer();
 });
@@ -945,6 +958,247 @@ $("#timerModes").addEventListener("click", (e) => {
   timer.isBreak = !!b.dataset.break;
   renderTimer();
 });
+
+// ---------- Musik (wird live im Browser erzeugt, keine Dateien nötig) ----------
+
+// Akkorde als MIDI-Noten (60 = C4). Ein Akkord pro Takt, 16 Schritte pro Takt.
+const MUSIC_STYLES = {
+  lofi: {
+    name: "Lo-Fi Fokus", desc: "ruhig, gleichmässig, ideal zum Konzentrieren", bpm: 76, swing: 0.12, wave: "triangle", cutoff: 1300,
+    chords: [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]], bass: [36, 33, 29, 31],
+    kick: [0, 7, 10], snare: [4, 12], hat: 2, lead: null, crackle: true,
+  },
+  upbeat: {
+    name: "Motivation", desc: "fröhlich und mit Schwung", bpm: 112, swing: 0, wave: "sawtooth", cutoff: 2200,
+    chords: [[60, 64, 67], [55, 59, 62], [57, 60, 64], [53, 57, 60]], bass: [36, 31, 33, 29],
+    kick: [0, 4, 8, 12], snare: [4, 12], hat: 1, lead: { every: 2, pattern: [0, 1, 2, 1] }, crackle: false,
+  },
+  pilot: {
+    name: "Startbahn", desc: "episch wie ein Start – Schub für die Prüfung", bpm: 124, swing: 0, wave: "sawtooth", cutoff: 2600,
+    chords: [[62, 65, 69], [58, 62, 65], [53, 57, 60], [60, 64, 67]], bass: [38, 34, 29, 36],
+    kick: [0, 3, 8, 11], snare: [4, 12], hat: 1, lead: { every: 1, pattern: [0, 1, 2, 3, 2, 1] }, crackle: false,
+  },
+  ambient: {
+    name: "Wolkenmeer", desc: "sanfte Klangflächen, ohne Schlagzeug", bpm: 56, swing: 0, wave: "sine", cutoff: 900,
+    chords: [[60, 67, 71, 74], [57, 64, 67, 72], [53, 60, 64, 69], [55, 62, 65, 71]], bass: [36, 33, 29, 31],
+    kick: [], snare: [], hat: 0, lead: { every: 4, pattern: [3, 2, 1, 2] }, crackle: false,
+  },
+};
+
+const music = { ctx: null, bus: null, filter: null, playing: false, step: 0, nextTime: 0, handle: null, noise: null, crackle: null };
+const midiHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+function ensureAudio() {
+  if (music.ctx) return music.ctx;
+  const ctx = new AudioContext();
+  music.ctx = ctx;
+  music.filter = ctx.createBiquadFilter();
+  music.filter.type = "lowpass";
+  music.bus = ctx.createGain();
+  music.bus.connect(music.filter).connect(ctx.destination);
+  const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  music.noise = buf;
+  return ctx;
+}
+
+function tone(freq, t, dur, { type = "triangle", gain = 0.1, attack = 0.02, release = 0.2 } = {}) {
+  const ctx = music.ctx, osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(gain, t + attack);
+  g.gain.setValueAtTime(gain, t + Math.max(attack, dur - release));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(g).connect(music.bus);
+  osc.start(t);
+  osc.stop(t + dur + 0.05);
+}
+
+function noiseHit(t, dur, filterType, freq, gain) {
+  const ctx = music.ctx, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  src.buffer = music.noise;
+  f.type = filterType;
+  f.frequency.value = freq;
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(g).connect(music.bus);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + dur + 0.02);
+}
+
+function kick(t) {
+  const ctx = music.ctx, osc = ctx.createOscillator(), g = ctx.createGain();
+  osc.frequency.setValueAtTime(140, t);
+  osc.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+  g.gain.setValueAtTime(0.55, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+  osc.connect(g).connect(music.bus);
+  osc.start(t);
+  osc.stop(t + 0.32);
+}
+
+function playStep(step, t) {
+  const st = MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi;
+  const bar = Math.floor(step / 16) % st.chords.length, s16 = step % 16;
+  const sixteenth = 60 / st.bpm / 4, barLen = sixteenth * 16;
+  const chord = st.chords[bar];
+  if (s16 === 0) {
+    chord.forEach((n) => tone(midiHz(n), t, barLen, { type: st.wave, gain: 0.045, attack: st.bpm < 70 ? 0.8 : 0.15, release: 0.5 }));
+  }
+  if (s16 === 0 || (st.bpm > 100 && s16 === 8)) {
+    tone(midiHz(st.bass[bar]), t, (st.bpm > 100 ? 8 : 16) * sixteenth * 0.9, { type: "sine", gain: 0.22, attack: 0.01, release: 0.15 });
+  }
+  if (st.kick.includes(s16)) kick(t);
+  if (st.snare.includes(s16)) noiseHit(t, 0.18, "bandpass", 1800, 0.25);
+  if (st.hat && s16 % st.hat === 0) noiseHit(t, 0.05, "highpass", 7000, s16 % 4 === 2 ? 0.09 : 0.05);
+  if (st.lead && s16 % st.lead.every === 0) {
+    const i = (s16 / st.lead.every) % st.lead.pattern.length;
+    const n = chord[st.lead.pattern[i] % chord.length] + 12;
+    tone(midiHz(n), t, sixteenth * st.lead.every * 0.9, { type: st.bpm < 70 ? "sine" : "square", gain: st.bpm < 70 ? 0.05 : 0.03, attack: 0.01, release: 0.08 });
+  }
+  if (st.crackle && Math.random() < 0.3) noiseHit(t + Math.random() * sixteenth, 0.01, "highpass", 3000, 0.03);
+}
+
+function scheduleMusic() {
+  const st = MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi;
+  const sixteenth = 60 / st.bpm / 4;
+  while (music.nextTime < music.ctx.currentTime + 0.15) {
+    playStep(music.step, music.nextTime);
+    const swing = st.swing ? (music.step % 2 === 0 ? 1 + st.swing : 1 - st.swing) : 1;
+    music.nextTime += sixteenth * swing;
+    music.step = (music.step + 1) % 64;
+  }
+}
+
+function applyMusicSettings() {
+  if (!music.ctx) return;
+  const st = MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi;
+  music.filter.frequency.setTargetAtTime(st.cutoff, music.ctx.currentTime, 0.1);
+  music.bus.gain.setTargetAtTime(state.musicVolume * 0.8, music.ctx.currentTime, 0.05);
+}
+
+function startMusic() {
+  try {
+    const ctx = ensureAudio();
+    ctx.resume();
+    if (music.playing) return;
+    music.playing = true;
+    music.step = 0;
+    music.nextTime = ctx.currentTime + 0.05;
+    music.bus.gain.setValueAtTime(0, ctx.currentTime);
+    applyMusicSettings();
+    music.handle = setInterval(scheduleMusic, 25);
+    scheduleMusic();
+  } catch {
+    toast("Musik kann in diesem Browser nicht abgespielt werden.");
+  }
+  renderMusic();
+}
+
+function stopMusic() {
+  if (!music.playing) return;
+  music.playing = false;
+  clearInterval(music.handle);
+  music.bus.gain.setTargetAtTime(0, music.ctx.currentTime, 0.15);
+  renderMusic();
+}
+
+function renderMusic() {
+  $("#musicStyles").innerHTML = Object.entries(MUSIC_STYLES).map(([k, st]) =>
+    `<button type="button" class="${k === state.musicStyle ? "active" : ""}" data-style="${k}" title="${esc(st.desc)}">${esc(st.name)}</button>`).join("");
+  $("#musicToggle").textContent = music.playing ? "⏹️ Musik aus" : "🎵 Musik an";
+  $("#musicVolume").value = Math.round(state.musicVolume * 100);
+  $("#musicDesc").textContent = (MUSIC_STYLES[state.musicStyle] || MUSIC_STYLES.lofi).desc;
+}
+
+$("#musicToggle").addEventListener("click", () => (music.playing ? stopMusic() : startMusic()));
+$("#musicStyles").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-style]");
+  if (!b) return;
+  state.musicStyle = b.dataset.style;
+  save();
+  if (music.playing) { music.step = 0; applyMusicSettings(); }
+  renderMusic();
+});
+$("#musicVolume").addEventListener("input", (e) => {
+  state.musicVolume = Number(e.target.value) / 100;
+  applyMusicSettings();
+});
+$("#musicVolume").addEventListener("change", () => save());
+
+// ---------- Designs & Einstellungen ----------
+
+const DESIGNS = {
+  tafel: { name: "Wandtafel", desc: "Grün und Kreide, hell oder dunkel", swatch: ["#f3f5f2", "#1f6f5c", "#f2c94c"], timerTitle: "Pomodoro-Timer" },
+  pilot: { name: "Cockpit", desc: "Nachtflug mit Instrumenten-Anzeigen und Pilotensprüchen", swatch: ["#0a1626", "#ffb020", "#5fd3f3"], timerTitle: "Flugzeit ✈️", pilot: true },
+  ozean: { name: "Ozean", desc: "frisches Blau, hell", swatch: ["#eef6fb", "#0f6fa8", "#2ec4b6"], timerTitle: "Pomodoro-Timer" },
+  sunset: { name: "Abendrot", desc: "warme Farben, hell", swatch: ["#fff6ef", "#c2410c", "#f59e0b"], timerTitle: "Pomodoro-Timer" },
+  space: { name: "Weltall", desc: "dunkles Violett mit Sternen", swatch: ["#0e0b1f", "#a78bfa", "#f472b6"], timerTitle: "Pomodoro-Timer" },
+};
+
+const PILOT_QUOTES = [
+  { text: "Jede Stunde Lernen ist eine Flugstunde auf dem Weg ins Cockpit." },
+  { text: "Wenn alles gegen dich zu laufen scheint, denk daran: Ein Flugzeug hebt gegen den Wind ab, nicht mit ihm.", by: "Henry Ford zugeschrieben" },
+  { text: "Mathe, Physik und Englisch sind deine Checkliste fürs Cockpit. Hak heute einen Punkt ab." },
+  { text: "Hast du einmal das Fliegen erlebt, wirst du immer mit dem Blick zum Himmel gehen.", by: "Leonardo da Vinci zugeschrieben" },
+  { text: "Captains werden nicht geboren. Sie werden gemacht – eine Lerneinheit nach der anderen." },
+  { text: "Der Himmel ist nicht die Grenze. Er ist dein zukünftiges Büro." },
+  { text: "Piloten üben jeden Ablauf, bis er sitzt. Genau das machst du gerade auch." },
+  { text: "V1, Rotate, Positive Climb: Heute ist dein Startlauf." },
+  { text: "Tipp: Schau dir SPHAIR an – das Schweizer Programm, das junge Flugtalente entdeckt." },
+];
+
+function quoteOfDay(offset = 0) {
+  const day = Math.floor(new Date(todayISO() + "T00:00:00").getTime() / 86400000);
+  return PILOT_QUOTES[(day + offset) % PILOT_QUOTES.length];
+}
+let quoteOffset = 0;
+
+function renderQuote() {
+  const show = DESIGNS[state.design]?.pilot || state.pilotQuotes;
+  const el = $("#quoteBanner");
+  el.hidden = !show;
+  if (!show) return;
+  const q = quoteOfDay(quoteOffset);
+  el.innerHTML = `<div class="quote-icon" aria-hidden="true">${PLANE_SVG}</div>
+    <div class="quote-body"><div class="quote-label">Mission: Pilot werden</div>
+    <blockquote>„${esc(q.text)}“</blockquote>${q.by ? `<cite>– ${esc(q.by)}</cite>` : ""}</div>
+    <button class="btn ghost small" id="nextQuote" title="Anderen Spruch zeigen">Neuer Spruch</button>`;
+  $("#nextQuote").addEventListener("click", () => { quoteOffset++; renderQuote(); });
+}
+
+const PLANE_SVG = `<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>`;
+
+function applyDesign() {
+  const d = DESIGNS[state.design] ? state.design : "tafel";
+  document.documentElement.dataset.design = d;
+  $("#themeToggle").hidden = d !== "tafel";
+  $("#timerTitle").textContent = DESIGNS[d].timerTitle;
+  renderQuote();
+}
+
+function renderSettings() {
+  $("#designGrid").innerHTML = Object.entries(DESIGNS).map(([k, d]) => `
+    <button type="button" class="design-option ${k === state.design ? "active" : ""}" data-design="${k}" aria-pressed="${k === state.design}">
+      <span class="swatches">${d.swatch.map((c) => `<span style="background:${c}"></span>`).join("")}</span>
+      <strong>${esc(d.name)}</strong><span class="muted">${esc(d.desc)}</span></button>`).join("");
+  $("#setMusicAuto").checked = state.musicAuto;
+  $("#setPilotQuotes").checked = state.pilotQuotes;
+}
+
+$("#designGrid").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-design]");
+  if (!b) return;
+  state.design = b.dataset.design;
+  if (state.design === "pilot" && !music.playing) state.musicStyle = "pilot";
+  save();
+  applyDesign(); renderSettings(); renderMusic();
+  toast(state.design === "pilot" ? "✈️ Willkommen im Cockpit, Captain!" : `Design „${DESIGNS[state.design].name}“ aktiv.`);
+});
+$("#setMusicAuto").addEventListener("change", (e) => { state.musicAuto = e.target.checked; save(); });
+$("#setPilotQuotes").addEventListener("change", (e) => { state.pilotQuotes = e.target.checked; save(); renderQuote(); });
 
 // ---------- Notenrechner (Schweizer Skala 1–6) ----------
 
@@ -1005,6 +1259,9 @@ $("#gradesView").addEventListener("click", (e) => {
 function renderStreak() { $("#streak").textContent = `🔥 ${streakCount()}`; }
 
 function renderAll() {
+  applyDesign();
+  renderSettings();
+  renderMusic();
   renderTopicList();
   renderActiveTopic();
   renderOverview();
