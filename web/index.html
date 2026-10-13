@@ -23,6 +23,8 @@
   --warn: #b7791f;
   --radius: 14px;
   --shadow: 0 1px 3px rgba(20, 50, 40, 0.06);
+  --cat-schule: #3b82c4; --cat-lernen: #1f8a6c; --cat-sport: #e0802b; --cat-freizeit: #9b5de5;
+  --cat-pflicht: #8a7a5c; --cat-pause: #d4a017; --cat-termin: #d1495b;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
 }
@@ -387,9 +389,99 @@ details.collapsible > summary .muted { margin-left: auto; }
 .quick-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .quick-actions .btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-inline: 8px; }
 @media (max-width: 700px) { .quick-actions { grid-template-columns: 1fr 1fr; } .quick-actions .btn:first-child { grid-column: span 2; } }
+
+/* ===== Startbildschirm ===== */
+button.brand { background: none; border: none; color: var(--text); cursor: pointer; padding: 4px 6px; border-radius: 8px; font: inherit; font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; }
+button.brand:hover { background: var(--surface-2); }
+.mode-title { justify-self: center; font-family: var(--font-display); font-weight: 700; }
+.launcher { display: grid; gap: 20px; padding-block: 32px; }
+.launch-head h1 { font-size: clamp(1.6rem, 5vw, 2.3rem); margin: 0; text-wrap: balance; }
+.launch-date { margin: 0 0 4px; color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+.launch-head .muted { margin: 4px 0 0; font-size: 1rem; }
+.launch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.launch-card {
+  display: grid; gap: 6px; align-content: start; text-align: left; padding: 22px; min-height: 200px;
+  background: var(--surface); color: var(--text); border: 2px solid var(--border); border-radius: 20px;
+  cursor: pointer; font: inherit; box-shadow: var(--shadow); transition: border-color 0.15s, transform 0.15s;
+}
+.launch-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.launch-icon { font-size: 2.4rem; line-height: 1; }
+.launch-name { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin-top: 6px; }
+.launch-desc { color: var(--muted); }
+.launch-info { margin-top: auto; padding-top: 10px; font-size: 0.88rem; font-weight: 600; color: var(--primary); }
+body[data-mode="launcher"] .streak { visibility: visible; }
+
+/* ===== Planer ===== */
+.date-nav { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.date-nav .btn { font-size: 1.2rem; line-height: 1; padding: 8px 14px; }
+.date-label { display: grid; text-align: center; min-width: 0; }
+.date-label strong { font-family: var(--font-display); font-size: 1.15rem; }
+
+.entry { display: flex; gap: 10px; align-items: stretch; padding: 8px 4px 8px 0; border-bottom: 1px solid var(--border); position: relative; }
+.entry:last-child { border-bottom: none; }
+.entry::before { content: ""; width: 4px; border-radius: 4px; background: var(--cat-termin); flex: none; }
+.entry.now { background: var(--primary-soft); border-radius: 10px; }
+.entry.done .e-title { text-decoration: line-through; color: var(--muted); }
+.entry.exam::before { background: var(--danger); }
+.e-time { display: grid; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 48px; font-size: 0.95rem; }
+.e-time span { color: var(--muted); font-weight: 500; font-size: 0.82rem; }
+.e-body { display: flex; gap: 10px; align-items: flex-start; flex: 1; min-width: 0; margin: 0; color: var(--text); font-size: inherit; cursor: pointer; }
+.e-body input { width: auto; margin-top: 4px; accent-color: var(--primary); }
+.e-title { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.e-meta { display: block; font-size: 0.8rem; color: var(--muted); }
+.entry .del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0 6px; }
+.cat-schule::before { background: var(--cat-schule); } .cat-lernen::before { background: var(--cat-lernen); }
+.cat-sport::before { background: var(--cat-sport); } .cat-freizeit::before { background: var(--cat-freizeit); }
+.cat-pflicht::before { background: var(--cat-pflicht); } .cat-pause::before { background: var(--cat-pause); }
+.cat-termin::before { background: var(--cat-termin); }
+
+.week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.w-day {
+  display: grid; align-content: start; gap: 6px; text-align: left; padding: 12px; min-height: 120px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font: inherit;
+}
+.w-day:hover { border-color: var(--primary); }
+.w-day.today { border: 2px solid var(--primary); }
+.w-head { font-family: var(--font-display); font-weight: 700; }
+.w-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.w-entry { display: flex; gap: 6px; align-items: baseline; font-size: 0.85rem; padding-left: 8px; position: relative; overflow-wrap: anywhere; }
+.w-entry::before { content: ""; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 3px; background: var(--cat-termin); }
+.w-entry.exam { font-weight: 700; color: var(--danger); }
+.w-entry.exam::before { background: var(--danger); }
+.w-entry.done { color: var(--muted); text-decoration: line-through; }
+.w-time { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 600; flex: none; }
+.w-free { font-size: 0.85rem; }
+
+.proposal-list { display: grid; }
+.proposal .p-day { margin: 12px 0 4px; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.tab-home { margin-left: auto; }
+
+@media (max-width: 700px) {
+  button.brand { font-size: 0; padding: 6px; }
+  button.brand .dot { width: 16px; height: 16px; }
+  .launcher { padding-block: 20px 32px; }
+  .launch-grid { grid-template-columns: 1fr; }
+  .launch-card { min-height: 0; padding: 18px; grid-template-columns: auto 1fr; column-gap: 14px; }
+  .launch-icon { grid-row: span 3; font-size: 2rem; }
+  .launch-name { margin-top: 0; font-size: 1.15rem; }
+  .launch-info { padding-top: 4px; }
+  #ptabs { grid-template-columns: repeat(4, 1fr); }
+  .tab-home { margin-left: 0; }
+  .week-grid { grid-template-columns: 1fr; }
+  .w-day { min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .launch-card:hover { transform: none; } }
+.entry.cat-schule::before, .w-entry.cat-schule::before { background: var(--cat-schule); }
+.entry.cat-lernen::before, .w-entry.cat-lernen::before { background: var(--cat-lernen); }
+.entry.cat-sport::before, .w-entry.cat-sport::before { background: var(--cat-sport); }
+.entry.cat-freizeit::before, .w-entry.cat-freizeit::before { background: var(--cat-freizeit); }
+.entry.cat-pflicht::before, .w-entry.cat-pflicht::before { background: var(--cat-pflicht); }
+.entry.cat-pause::before, .w-entry.cat-pause::before { background: var(--cat-pause); }
+#pchat { min-height: 180px; max-height: 50vh; }
 </style>
 <header class="topbar">
-    <div class="brand"><span class="dot"></span>Lern<span>Freund</span></div>
+    <button class="brand" id="homeBtn" type="button" title="Zum Startbildschirm"><span class="dot"></span>Lern<span>Freund</span></button>
+    <div class="mode-title" id="modeTitle" hidden></div>
     <button class="topic-switch" id="topicSwitch" type="button" aria-haspopup="dialog">
       <span class="ts-text"><span class="ts-sub" id="tsSub">Thema</span><span class="ts-main" id="tsMain">Thema wählen</span></span>
       <span class="ts-caret" aria-hidden="true">▾</span>
@@ -400,7 +492,31 @@ details.collapsible > summary .muted { margin-left: auto; }
     </div>
   </header>
 
-  <main class="layout">
+  <!-- Startbildschirm: Auswahl Lern-App oder Planer -->
+  <main class="layout launcher" id="launcher">
+    <div class="launch-head">
+      <p class="launch-date" id="launchDate"></p>
+      <h1 id="launchHello">Hoi!</h1>
+      <p class="muted">Was möchtest du jetzt machen?</p>
+    </div>
+    <div class="launch-grid">
+      <button class="launch-card" id="goLearn" type="button">
+        <span class="launch-icon" aria-hidden="true">📚</span>
+        <span class="launch-name">Lern-App</span>
+        <span class="launch-desc">Mit Coach Lumi lernen, Lernplan, Quiz, Karteikarten, Timer</span>
+        <span class="launch-info" id="launchLearnInfo"></span>
+      </button>
+      <button class="launch-card" id="goPlanner" type="button">
+        <span class="launch-icon" aria-hidden="true">🗓️</span>
+        <span class="launch-name">Tages- &amp; Wochenplaner</span>
+        <span class="launch-desc">Plane deinen Tag und deine Woche, auch mit dem Coach</span>
+        <span class="launch-info" id="launchPlanInfo"></span>
+      </button>
+    </div>
+    <div class="quote-banner" id="launchQuote" hidden></div>
+  </main>
+
+  <main class="layout" id="appLearn" hidden>
     <section class="content">
       <nav class="tabs" id="tabs" aria-label="Bereiche">
         <button data-tab="overview" class="active"><span class="ti">🏠</span><span class="tl">Start</span></button>
@@ -576,6 +692,89 @@ details.collapsible > summary .muted { margin-left: auto; }
     </section>
   </main>
 
+  <!-- Tages- und Wochenplaner -->
+  <main class="layout" id="appPlanner" hidden>
+    <section class="content">
+      <nav class="tabs" id="ptabs" aria-label="Planer-Bereiche">
+        <button data-ptab="day" class="active"><span class="ti">📅</span><span class="tl">Tag</span></button>
+        <button data-ptab="week"><span class="ti">🗓️</span><span class="tl">Woche</span></button>
+        <button data-ptab="coach"><span class="ti">🤖</span><span class="tl">Coach</span></button>
+        <button data-ptab="home" class="tab-home"><span class="ti">🏠</span><span class="tl">Start</span></button>
+      </nav>
+
+      <div class="tab-panel" id="ptab-day">
+        <div class="card date-nav">
+          <button class="btn small" id="dayPrev" type="button" aria-label="Vorheriger Tag">‹</button>
+          <div class="date-label"><strong id="dayLabel"></strong><span class="muted" id="daySub"></span></div>
+          <button class="btn small" id="dayNext" type="button" aria-label="Nächster Tag">›</button>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between">
+            <h2>Dein Tag</h2>
+            <button class="btn small" id="dayToday" type="button">Heute</button>
+          </div>
+          <div id="dayList"></div>
+        </div>
+        <details class="card collapsible" id="entryFormCard">
+          <summary><h2>＋ Eintrag hinzufügen</h2></summary>
+          <form id="entryForm" class="grid-form">
+            <div class="span2"><label for="entryTitle">Was?</label><input id="entryTitle" required placeholder="z.B. Training, Mathe lernen, Zimmer aufräumen"></div>
+            <div><label for="entryStart">Von</label><input id="entryStart" type="time" required value="16:00"></div>
+            <div><label for="entryEnd">Bis</label><input id="entryEnd" type="time" required value="17:00"></div>
+            <div><label for="entryCat">Art</label><select id="entryCat"></select></div>
+            <div><label class="switch" style="margin-top:28px"><input type="checkbox" id="entryRepeat"> Jede Woche</label></div>
+            <button class="btn primary span2" type="submit">Eintrag speichern</button>
+          </form>
+        </details>
+        <div class="card" id="dayLearnCard" hidden>
+          <h2>📚 Aus deinem Lernplan</h2>
+          <div id="dayLearn"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" id="ptab-week">
+        <div class="card date-nav">
+          <button class="btn small" id="weekPrev" type="button" aria-label="Vorherige Woche">‹</button>
+          <div class="date-label"><strong id="weekLabel"></strong><span class="muted" id="weekSub"></span></div>
+          <button class="btn small" id="weekNext" type="button" aria-label="Nächste Woche">›</button>
+        </div>
+        <div class="week-grid" id="weekView"></div>
+      </div>
+
+      <div class="tab-panel hidden" id="ptab-coach">
+        <div class="card">
+          <h2>Plan vom Coach erstellen lassen</h2>
+          <form id="pplanForm" class="grid-form">
+            <div class="span2"><label for="pplanRange">Für wann?</label>
+              <select id="pplanRange"><option value="today">Heute</option><option value="tomorrow">Morgen</option><option value="week">Ganze Woche (ab heute)</option></select></div>
+            <div class="span2"><label for="pplanTodo">Was steht an?</label>
+              <textarea id="pplanTodo" rows="3" placeholder="z.B. Schule bis 15:30, Training 18–19:30, Mathe-Prüfung vorbereiten, Zimmer aufräumen, Zeit mit Freunden"></textarea></div>
+            <div><label for="pplanWake">Aufstehen</label><input id="pplanWake" type="time" value="06:30"></div>
+            <div><label for="pplanSleep">Schlafen</label><input id="pplanSleep" type="time" value="22:00"></div>
+            <button class="btn primary span2" type="submit" id="pplanBtn">🤖 Plan vorschlagen lassen</button>
+          </form>
+          <p class="muted" style="margin-top:10px">Der Coach kennt deine Einträge, Prüfungen und Lernpläne und plant darum herum.</p>
+        </div>
+        <div id="pplanResult"></div>
+        <div class="card chat-card">
+          <h2>Frag den Planungs-Coach</h2>
+          <div class="chat" id="pchat"></div>
+          <div class="quick" id="pquick">
+            <button type="button">Wie schaffe ich alles diese Woche?</button>
+            <button type="button">Ich habe keine Motivation, was tun?</button>
+            <button type="button">Wann lerne ich am besten?</button>
+          </div>
+          <form class="chat-input" id="pchatForm">
+            <textarea id="pchatInput" rows="2" placeholder="Frag zur Planung…"></textarea>
+            <button class="btn" type="button" id="pstopBtn" hidden>Stopp</button>
+            <button class="btn primary" type="submit" id="psendBtn">Senden</button>
+          </form>
+          <div class="row-end"><button class="btn ghost small" id="pclearChat" type="button">🗑️ Chat leeren</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
   <!-- Themen-Auswahl (unten aufklappend auf dem Handy) -->
   <div class="sheet-backdrop" id="topicSheet" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -665,7 +864,7 @@ function topicContext(t) {
 const DEFAULT_SETTINGS = { design: "tafel", musicStyle: "lofi", musicVolume: 0.6, musicAuto: true, pilotQuotes: false };
 
 function emptyState() {
-  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null, ...DEFAULT_SETTINGS };
+  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null, planner: { entries: [], chat: [] }, ...DEFAULT_SETTINGS };
 }
 function loadLocal() {
   try {
@@ -697,7 +896,7 @@ function save() {
 
 function syncCloud() {
   cloud.queue = cloud.queue.then(async () => {
-    const docs = { meta: metaDoc() };
+    const docs = { meta: metaDoc(), planner: { entries: state.planner.entries, chat: state.planner.chat.slice(-MAX_CHAT) } };
     state.topics.forEach((t) => (docs["t_" + t.id] = topicDoc(t)));
     try {
       for (const [id, body] of Object.entries(docs)) {
@@ -735,6 +934,7 @@ async function connectCloud() {
       const body = structuredClone(d.data());
       cloud.saved[d.id] = JSON.stringify(body);
       if (d.id === "meta") meta = body;
+      else if (d.id === "planner") state.planner = { entries: body.entries || [], chat: body.chat || [] };
       else if (d.id.startsWith("t_")) byId[body.id] = body;
     });
     const order = meta?.order || Object.keys(byId);
@@ -1042,7 +1242,7 @@ function switchTab(name) {
   const main = SUB_PARENT[name] || name;
   if (SUB_PARENT[name]) switchSub(main, name);
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === main));
-  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
+  document.querySelectorAll("#appLearn .tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
   if (main === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
   window.scrollTo({ top: 0 });
 }
@@ -1235,10 +1435,12 @@ function onTaskToggle(e) {
   if (cb.checked) { markActiveToday(); }
   save();
   renderPlan(); renderOverview();
+  if (mode === "planner") renderDay();
   if (cb.checked && t.plan && planProgress(t) === 100) toast("🎉 Lernplan komplett erledigt! Super gemacht!");
 }
 $("#planView").addEventListener("change", onTaskToggle);
 $("#todayTasks").addEventListener("change", onTaskToggle);
+$("#dayLearn").addEventListener("change", onTaskToggle);
 
 function renderPlan() {
   const t = activeTopic();
@@ -1923,12 +2125,408 @@ $("#gradesView").addEventListener("click", (e) => {
   save(); renderGrades();
 });
 
+
+// ---------- Startbildschirm ----------
+
+let mode = "launcher"; // "launcher" | "learn" | "planner"
+
+function setMode(m) {
+  mode = m;
+  $("#launcher").hidden = m !== "launcher";
+  $("#appLearn").hidden = m !== "learn";
+  $("#appPlanner").hidden = m !== "planner";
+  $("#topicSwitch").hidden = m !== "learn";
+  $("#modeTitle").hidden = m === "learn";
+  $("#modeTitle").textContent = m === "planner" ? "🗓️ Planer" : "";
+  document.body.dataset.mode = m;
+  if (m === "launcher") renderLauncher();
+  if (m === "planner") renderPlanner();
+  window.scrollTo({ top: 0 });
+}
+
+function renderLauncher() {
+  const h = new Date().getHours();
+  $("#launchHello").textContent = h < 11 ? "Guten Morgen! ☀️" : h < 17 ? "Hoi! 👋" : h < 22 ? "Guten Abend! 🌙" : "Noch wach? 🌙";
+  $("#launchDate").textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" });
+  const exams = state.topics.filter((x) => x.examDate && daysUntil(x.examDate) >= 0).sort((a, b) => a.examDate.localeCompare(b.examDate));
+  const t = activeTopic();
+  $("#launchLearnInfo").textContent = exams[0]
+    ? `Nächste Prüfung: ${exams[0].subject} ${daysUntil(exams[0].examDate) === 0 ? "heute" : `in ${daysUntil(exams[0].examDate)} Tagen`}`
+    : t ? `Aktuelles Thema: ${t.topic}` : "Noch kein Thema angelegt";
+  const today = todayISO();
+  const items = entriesFor(today);
+  const now = nowHM();
+  const next = items.find((e) => e.end > now);
+  $("#launchPlanInfo").textContent = items.length
+    ? `Heute ${items.length} ${items.length === 1 ? "Eintrag" : "Einträge"}${next ? ` · als Nächstes ${next.start} ${next.title}` : " · alles vorbei"}`
+    : "Heute noch nichts geplant";
+  const show = DESIGNS[state.design]?.pilot || state.pilotQuotes;
+  $("#launchQuote").hidden = !show;
+  if (show) {
+    const q = quoteOfDay(quoteOffset);
+    $("#launchQuote").innerHTML = `<div class="quote-icon" aria-hidden="true">${PLANE_SVG}</div><div class="quote-body"><div class="quote-label">Mission: Pilot werden</div><blockquote>„${esc(q.text)}“</blockquote>${q.by ? `<cite>– ${esc(q.by)}</cite>` : ""}</div>`;
+  }
+}
+
+$("#goLearn").addEventListener("click", () => setMode("learn"));
+$("#goPlanner").addEventListener("click", () => setMode("planner"));
+$("#homeBtn").addEventListener("click", () => setMode("launcher"));
+
+// ---------- Tages- & Wochenplaner ----------
+
+const CATS = {
+  schule: { name: "Schule", icon: "🏫" },
+  lernen: { name: "Lernen", icon: "📚" },
+  sport: { name: "Sport", icon: "⚽" },
+  freizeit: { name: "Freizeit", icon: "🎮" },
+  pflicht: { name: "Pflichten", icon: "🧹" },
+  pause: { name: "Essen & Pause", icon: "🍽️" },
+  termin: { name: "Termin", icon: "📌" },
+};
+const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
+let plannerDay = todayISO();
+let weekOffset = 0;
+let pplanProposal = null;
+
+function nowHM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+function addDays(iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return isoDate(d);
+}
+function weekdayOf(iso) { return new Date(iso + "T00:00:00").getDay(); }
+function mondayOf(iso) { return addDays(iso, -((weekdayOf(iso) + 6) % 7)); }
+const validHM = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v));
+
+// Einträge eines Tages: einmalige (date) und wöchentliche (weekday) – nach Startzeit sortiert.
+function entriesFor(iso) {
+  const dow = weekdayOf(iso);
+  return state.planner.entries
+    .filter((e) => e.date === iso || (e.weekday === dow && (!e.from || e.from <= iso)))
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+function examsOn(iso) { return state.topics.filter((t) => t.examDate === iso); }
+function learnTasksOn(iso) {
+  const out = [];
+  state.topics.forEach((topic) => topic.plan?.days.forEach((day, di) => { if (day.date === iso) out.push({ topic, day, di }); }));
+  return out;
+}
+
+function entryHtml(e, iso, compact = false) {
+  const cat = CATS[e.cat] || CATS.termin;
+  const done = !!e.done?.[iso];
+  const isNow = iso === todayISO() && e.start <= nowHM() && nowHM() < e.end;
+  if (compact) {
+    return `<li class="w-entry cat-${e.cat in CATS ? e.cat : "termin"} ${done ? "done" : ""}"><span class="w-time">${e.start}</span> ${esc(e.title)}</li>`;
+  }
+  return `<div class="entry cat-${e.cat in CATS ? e.cat : "termin"} ${done ? "done" : ""} ${isNow ? "now" : ""}">
+    <div class="e-time">${e.start}<span>${e.end}</span></div>
+    <label class="e-body"><input type="checkbox" data-done="${e.id}" ${done ? "checked" : ""}>
+      <span><span class="e-title">${esc(e.title)}</span>
+      <span class="e-meta">${cat.icon} ${cat.name}${e.weekday != null ? " · jede Woche" : ""}${isNow ? " · <strong>jetzt</strong>" : ""}</span></span></label>
+    <button class="del" data-del-entry="${e.id}" title="Eintrag löschen" aria-label="Eintrag löschen">✕</button>
+  </div>`;
+}
+
+function renderDay() {
+  const iso = plannerDay, today = todayISO();
+  const diff = daysUntil(iso);
+  $("#dayLabel").textContent = formatDate(iso, { weekday: "long", day: "numeric", month: "long" });
+  $("#daySub").textContent = diff === 0 ? "Heute" : diff === 1 ? "Morgen" : diff === -1 ? "Gestern" : diff > 0 ? `in ${diff} Tagen` : `vor ${-diff} Tagen`;
+  $("#dayToday").hidden = iso === today;
+  const items = entriesFor(iso);
+  const exams = examsOn(iso);
+  let html = exams.map((t) => `<div class="entry exam"><div class="e-time">📝</div><div class="e-body"><span><span class="e-title">Prüfung ${esc(t.subject)}: ${esc(t.topic)}</span><span class="e-meta">Viel Erfolg! 🍀</span></span></div></div>`).join("");
+  html += items.map((e) => entryHtml(e, iso)).join("");
+  if (!items.length && !exams.length) {
+    html = `<p class="empty">Noch nichts geplant. Füge unten einen Eintrag hinzu oder lass dir vom Coach einen Plan machen.</p>
+      <div class="row center"><button class="btn primary" id="dayAskCoach" type="button">🤖 Tag mit Coach planen</button></div>`;
+  }
+  $("#dayList").innerHTML = html;
+  $("#dayAskCoach")?.addEventListener("click", () => {
+    $("#pplanRange").value = iso === addDays(today, 1) ? "tomorrow" : "today";
+    switchPTab("coach");
+  });
+  const learn = learnTasksOn(iso);
+  $("#dayLearnCard").hidden = !learn.length;
+  $("#dayLearn").innerHTML = learn.map(({ topic, day, di }) => `<div style="margin-bottom:8px"><h3>${esc(topic.subject)} · ${esc(day.title)} <span class="pill">${day.minutes} min</span></h3>
+    ${day.tasks.map((task, ti) => taskHtml(topic, di, ti, task)).join("")}</div>`).join("");
+}
+
+function renderWeek() {
+  const monday = addDays(mondayOf(todayISO()), weekOffset * 7);
+  const sunday = addDays(monday, 6);
+  $("#weekLabel").textContent = `${formatDate(monday, { day: "numeric", month: "short" })} – ${formatDate(sunday, { day: "numeric", month: "short" })}`;
+  $("#weekSub").textContent = weekOffset === 0 ? "Diese Woche" : weekOffset === 1 ? "Nächste Woche" : weekOffset === -1 ? "Letzte Woche" : "";
+  const today = todayISO();
+  $("#weekView").innerHTML = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+    const iso = addDays(monday, i);
+    const items = entriesFor(iso), exams = examsOn(iso), learn = learnTasksOn(iso);
+    const list = exams.map((t) => `<li class="w-entry exam">📝 Prüfung ${esc(t.subject)}</li>`).join("")
+      + items.map((e) => entryHtml(e, iso, true)).join("")
+      + (learn.length ? `<li class="w-entry cat-lernen">📚 ${learn.length} Lerneinheit${learn.length > 1 ? "en" : ""}</li>` : "");
+    return `<button class="w-day ${iso === today ? "today" : ""}" data-day="${iso}" type="button">
+      <span class="w-head">${formatDate(iso, { weekday: "short" })} <span class="muted">${formatDate(iso, { day: "numeric", month: "numeric" })}</span></span>
+      <ul>${list || `<li class="muted w-free">frei</li>`}</ul></button>`;
+  }).join("");
+}
+
+function switchPTab(name) {
+  if (name === "home") return setMode("launcher");
+  document.querySelectorAll("#ptabs button").forEach((b) => b.classList.toggle("active", b.dataset.ptab === name));
+  document.querySelectorAll("#appPlanner .tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `ptab-${name}`));
+  if (name === "week") renderWeek();
+  if (name === "day") renderDay();
+  if (name === "coach") renderPChat();
+  window.scrollTo({ top: 0 });
+}
+$("#ptabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ptab]");
+  if (b) switchPTab(b.dataset.ptab);
+});
+
+function renderPlanner() {
+  $("#entryCat").innerHTML = Object.entries(CATS).map(([k, c]) => `<option value="${k}">${c.icon} ${c.name}</option>`).join("");
+  renderDay();
+  renderWeek();
+  renderPChat();
+}
+
+$("#dayPrev").addEventListener("click", () => { plannerDay = addDays(plannerDay, -1); renderDay(); });
+$("#dayNext").addEventListener("click", () => { plannerDay = addDays(plannerDay, 1); renderDay(); });
+$("#dayToday").addEventListener("click", () => { plannerDay = todayISO(); renderDay(); });
+$("#weekPrev").addEventListener("click", () => { weekOffset--; renderWeek(); });
+$("#weekNext").addEventListener("click", () => { weekOffset++; renderWeek(); });
+$("#weekView").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-day]");
+  if (b) { plannerDay = b.dataset.day; switchPTab("day"); }
+});
+
+$("#dayList").addEventListener("change", (e) => {
+  const cb = e.target.closest("[data-done]");
+  if (!cb) return;
+  const entry = state.planner.entries.find((x) => x.id === cb.dataset.done);
+  if (!entry) return;
+  entry.done = { ...(entry.done || {}) };
+  if (cb.checked) entry.done[plannerDay] = true;
+  else delete entry.done[plannerDay];
+  save(); renderDay();
+});
+$("#dayList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-del-entry]");
+  if (!b) return;
+  const entry = state.planner.entries.find((x) => x.id === b.dataset.delEntry);
+  if (!entry) return;
+  const msg = entry.weekday != null ? `„${entry.title}“ an allen ${WEEKDAYS[entry.weekday]}en löschen?` : `„${entry.title}“ löschen?`;
+  if (!(await ask(msg, "Löschen"))) return;
+  state.planner.entries = state.planner.entries.filter((x) => x.id !== entry.id);
+  save(); renderDay();
+});
+
+function newId() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+
+$("#entryForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = $("#entryTitle").value.trim(), start = $("#entryStart").value, end = $("#entryEnd").value;
+  if (!title || !validHM(start) || !validHM(end)) return toast("Bitte Titel und Zeiten ausfüllen.");
+  if (end <= start) return toast("„Bis“ muss nach „Von“ sein.");
+  const repeat = $("#entryRepeat").checked;
+  state.planner.entries.push({
+    id: newId(), title, start, end, cat: $("#entryCat").value,
+    date: repeat ? null : plannerDay, weekday: repeat ? weekdayOf(plannerDay) : null, from: repeat ? plannerDay : null, done: {},
+  });
+  save();
+  $("#entryTitle").value = "";
+  $("#entryRepeat").checked = false;
+  renderDay();
+  toast(repeat ? `Gespeichert, jeden ${WEEKDAYS[weekdayOf(plannerDay)]}.` : "Eintrag gespeichert.");
+});
+
+// --- Coach: Plan vorschlagen ---
+
+function plannerContext(dates) {
+  const lines = [];
+  dates.forEach((iso) => {
+    const parts = [];
+    entriesFor(iso).forEach((e) => parts.push(`${e.start}–${e.end} ${e.title} (${(CATS[e.cat] || CATS.termin).name})`));
+    examsOn(iso).forEach((t) => parts.push(`PRÜFUNG ${t.subject}: ${t.topic}`));
+    learnTasksOn(iso).forEach(({ topic, day }) => parts.push(`Lernplan ${topic.subject}: ${day.title} (${day.minutes} min): ${day.tasks.join("; ")}`));
+    lines.push(`${formatDate(iso, { weekday: "long" })} ${iso}: ${parts.length ? parts.join(" | ") : "noch nichts eingetragen"}`);
+  });
+  const exams = state.topics.filter((t) => t.examDate && daysUntil(t.examDate) >= 0).map((t) => `${t.examDate} ${t.subject}: ${t.topic}`);
+  return `Bereits eingetragen:\n${lines.join("\n")}\n\nAnstehende Prüfungen: ${exams.length ? exams.join("; ") : "keine"}`;
+}
+
+const PLANNER_RULES = `Du bist "Lumi", ein freundlicher Planungs-Coach für eine Schülerin oder einen Schüler (ca. 15 Jahre) an einem Schweizer Gymnasium.
+Du hilfst, Tage und Wochen realistisch zu planen: Schule, Lernen, Sport, Hobbys, Pflichten, Freizeit und genug Schlaf (8–10 Stunden).
+- Schreib auf Deutsch mit Schweizer Rechtschreibung ("ss" statt "ß"), kurz und motivierend.
+- Lernblöcke 25–50 Minuten mit kurzen Pausen; schwierige Fächer eher früher am Tag; vor Prüfungen rechtzeitig wiederholen.
+- Freizeit und Erholung sind wichtig und gehören in jeden Plan. Keine überfüllten Tage.
+- Bildschirme 30–60 Minuten vor dem Schlafen weglegen.`;
+
+$("#pplanForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const range = $("#pplanRange").value, today = todayISO();
+  const dates = range === "today" ? [today] : range === "tomorrow" ? [addDays(today, 1)] : [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(today, i));
+  const todo = $("#pplanTodo").value.trim();
+  const btn = $("#pplanBtn");
+  setBusy(btn, true, "Coach plant…");
+  try {
+    const data = await askJsonWith(PLANNER_RULES, `Plane ${range === "week" ? "die nächsten 7 Tage" : `den ${formatDate(dates[0], { weekday: "long", day: "numeric", month: "long" })}`}.
+
+Jetzt ist ${formatDate(today, { weekday: "long" })} ${today}, ${nowHM()} Uhr. Plane heute nichts vor dieser Uhrzeit.
+Aufstehen: ${$("#pplanWake").value}, Schlafen: ${$("#pplanSleep").value}
+Was ansteht (eigene Worte): ${todo || "nichts Besonderes angegeben"}
+
+${plannerContext(dates)}
+
+Regeln:
+- Die bereits eingetragenen Einträge sind fix: wiederhole sie nicht und plane nichts, was sich mit ihnen überschneidet.
+- Ergänze nur neue Blöcke: Lernen (inkl. Lernplan-Aufgaben und Prüfungsvorbereitung), Pausen, Essen, Pflichten, Freizeit.
+- Zeiten im Format HH:MM, zwischen Aufstehen und Schlafen.
+- "cat" ist genau einer von: schule, lernen, sport, freizeit, pflicht, pause, termin.
+
+Antworte nur mit JSON in genau dieser Form:
+{"summary": "1-2 Sätze", "entries": [{"date": "YYYY-MM-DD", "start": "HH:MM", "end": "HH:MM", "title": "kurz", "cat": "lernen"}], "tips": ["2-3 kurze Tipps"]}`);
+    const entries = (Array.isArray(data?.entries) ? data.entries : [])
+      .filter((x) => x && dates.includes(x.date) && validHM(x.start) && validHM(x.end) && x.end > x.start && x.title)
+      .map((x) => ({ date: x.date, start: x.start, end: x.end, title: String(x.title).slice(0, 80), cat: x.cat in CATS ? x.cat : "termin" }))
+      .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    if (!entries.length) throw new Error("Der Coach hat keinen brauchbaren Plan geschickt. Bitte nochmals versuchen.");
+    pplanProposal = { summary: String(data.summary || ""), tips: Array.isArray(data.tips) ? data.tips.map(String) : [], entries, multi: dates.length > 1 };
+    renderProposal();
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+function renderProposal() {
+  const p = pplanProposal, el = $("#pplanResult");
+  if (!p) { el.innerHTML = ""; return; }
+  let lastDate = "";
+  el.innerHTML = `<div class="card proposal">
+    <h2>Vorschlag vom Coach</h2>
+    ${p.summary ? `<p>${esc(p.summary)}</p>` : ""}
+    <div class="proposal-list">${p.entries.map((x, i) => {
+      const head = p.multi && x.date !== lastDate ? `<h3 class="p-day">${formatDate(x.date, { weekday: "long", day: "numeric", month: "long" })}</h3>` : "";
+      lastDate = x.date;
+      return `${head}<label class="entry cat-${x.cat}"><div class="e-time">${x.start}<span>${x.end}</span></div>
+        <span class="e-body"><input type="checkbox" data-pi="${i}" checked><span><span class="e-title">${esc(x.title)}</span>
+        <span class="e-meta">${CATS[x.cat].icon} ${CATS[x.cat].name}</span></span></span></label>`;
+    }).join("")}</div>
+    ${p.tips.length ? `<ul class="tips">${p.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+    <div class="row" style="justify-content:flex-end; margin-top:10px">
+      <button class="btn ghost" id="pDiscard" type="button">Verwerfen</button>
+      <button class="btn primary" id="pAccept" type="button">✅ Ausgewählte übernehmen</button>
+    </div></div>`;
+  $("#pDiscard").addEventListener("click", () => { pplanProposal = null; renderProposal(); });
+  $("#pAccept").addEventListener("click", () => {
+    const chosen = [...el.querySelectorAll("[data-pi]")].filter((c) => c.checked).map((c) => p.entries[Number(c.dataset.pi)]);
+    chosen.forEach((x) => state.planner.entries.push({ id: newId(), ...x, weekday: null, from: null, done: {} }));
+    save();
+    pplanProposal = null;
+    renderProposal();
+    plannerDay = chosen[0]?.date || plannerDay;
+    toast(`✅ ${chosen.length} Einträge im Planer gespeichert.`);
+    switchPTab(p.multi ? "week" : "day");
+  });
+}
+
+async function askJsonWith(rules, prompt) {
+  const sample = await getSample();
+  if (!sample) throw new Error("Der Coach funktioniert nur, wenn du die App auf claude.ai öffnest.");
+  try {
+    return await sample.json(rules + "\n\n" + prompt, { cache: false });
+  } catch (e) {
+    throw new Error(sampleErrorText(e));
+  }
+}
+
+// --- Coach: Chat zur Planung ---
+
+let pchatBusy = false, pchatCtl = null;
+
+function renderPChat() {
+  const chat = $("#pchat");
+  const msgs = state.planner.chat;
+  chat.innerHTML = msgs.length ? msgs.map((m) => m.role === "user"
+    ? `<div class="msg user">${esc(m.content)}</div>`
+    : `<div class="msg assistant">${md(m.content)}</div>`).join("")
+    : `<div class="empty">🤖 Frag mich alles zur Planung: wie du alles unter einen Hut bringst, wann du am besten lernst oder wie du dranbleibst.</div>`;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendPChat(text) {
+  if (pchatBusy || !text.trim()) return;
+  pchatBusy = true;
+  $("#psendBtn").disabled = true;
+  const msgs = state.planner.chat;
+  msgs.push({ role: "user", content: text.trim() });
+  save(); renderPChat();
+  const chat = $("#pchat");
+  const bubble = document.createElement("div");
+  bubble.className = "msg assistant typing";
+  chat.appendChild(bubble);
+  chat.scrollTop = chat.scrollHeight;
+  let answer = "";
+  pchatCtl = new AbortController();
+  $("#pstopBtn").hidden = false;
+  try {
+    const sample = await getSample();
+    if (!sample) throw { code: "unavailable" };
+    const today = todayISO();
+    const ctx = plannerContext([0, 1, 2, 3, 4, 5, 6].map((i) => addDays(today, i)));
+    const rules = `${PLANNER_RULES}\n\nJetzt ist ${formatDate(today, { weekday: "long" })} ${today}, ${nowHM()} Uhr.\n${ctx}\n\nDas Gespräch folgt.`;
+    const history = msgs.slice(-30);
+    while (history.length && history[0].role !== "user") history.shift();
+    const { text: reply } = await sample([{ role: "user", content: rules }, ...history], {
+      cache: false, signal: pchatCtl.signal,
+      onText: ({ text: soFar }) => { answer = soFar; bubble.innerHTML = md(answer); chat.scrollTop = chat.scrollHeight; },
+    });
+    answer = reply;
+  } catch (e) {
+    if (e?.code === "unavailable") answer = "⚠️ Der Coach funktioniert nur, wenn du die App auf claude.ai öffnest.";
+    else if (e?.code === "refused") answer = "⚠️ " + sampleErrorText(e);
+    else { answer = e?.text || answer; if (e?.code !== "cancelled") answer += `\n\n⚠️ ${sampleErrorText(e)}`; }
+  }
+  $("#pstopBtn").hidden = true;
+  if (answer.trim()) msgs.push({ role: "assistant", content: answer.trim() });
+  else msgs.pop();
+  save();
+  pchatBusy = false;
+  $("#psendBtn").disabled = false;
+  renderPChat();
+}
+
+$("#pchatForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("#pchatInput").value;
+  $("#pchatInput").value = "";
+  sendPChat(text);
+});
+$("#pchatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#pchatForm").requestSubmit(); }
+});
+$("#pquick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) sendPChat(b.textContent); });
+$("#pstopBtn").addEventListener("click", () => pchatCtl?.abort());
+$("#pclearChat").addEventListener("click", async () => {
+  if (state.planner.chat.length && await ask("Chat mit dem Planungs-Coach löschen?", "Löschen")) { state.planner.chat = []; save(); renderPChat(); }
+});
+
 // ---------- Start ----------
 
 function renderStreak() { $("#streak").textContent = `🔥 ${streakCount()}`; }
 
 function renderAll() {
   applyDesign();
+  if (mode === "launcher") renderLauncher();
+  if (mode === "planner") renderPlanner();
   renderSettings();
   renderMusic();
   renderTopicSwitch();
@@ -1948,5 +2546,6 @@ function renderAll() {
 applyTheme();
 renderSubjects();
 renderAll();
+setMode("launcher");
 connectCloud();
 </script>

@@ -44,7 +44,7 @@ function topicContext(t) {
 const DEFAULT_SETTINGS = { design: "tafel", musicStyle: "lofi", musicVolume: 0.6, musicAuto: true, pilotQuotes: false };
 
 function emptyState() {
-  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null, ...DEFAULT_SETTINGS };
+  return { topics: [], activeId: null, minutesByDay: {}, grades: [], theme: null, planner: { entries: [], chat: [] }, ...DEFAULT_SETTINGS };
 }
 function loadLocal() {
   try {
@@ -76,7 +76,7 @@ function save() {
 
 function syncCloud() {
   cloud.queue = cloud.queue.then(async () => {
-    const docs = { meta: metaDoc() };
+    const docs = { meta: metaDoc(), planner: { entries: state.planner.entries, chat: state.planner.chat.slice(-MAX_CHAT) } };
     state.topics.forEach((t) => (docs["t_" + t.id] = topicDoc(t)));
     try {
       for (const [id, body] of Object.entries(docs)) {
@@ -114,6 +114,7 @@ async function connectCloud() {
       const body = structuredClone(d.data());
       cloud.saved[d.id] = JSON.stringify(body);
       if (d.id === "meta") meta = body;
+      else if (d.id === "planner") state.planner = { entries: body.entries || [], chat: body.chat || [] };
       else if (d.id.startsWith("t_")) byId[body.id] = body;
     });
     const order = meta?.order || Object.keys(byId);
@@ -421,7 +422,7 @@ function switchTab(name) {
   const main = SUB_PARENT[name] || name;
   if (SUB_PARENT[name]) switchSub(main, name);
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === main));
-  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
+  document.querySelectorAll("#appLearn .tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `tab-${main}`));
   if (main === "coach") $("#chat").scrollTop = $("#chat").scrollHeight;
   window.scrollTo({ top: 0 });
 }
@@ -614,10 +615,12 @@ function onTaskToggle(e) {
   if (cb.checked) { markActiveToday(); }
   save();
   renderPlan(); renderOverview();
+  if (mode === "planner") renderDay();
   if (cb.checked && t.plan && planProgress(t) === 100) toast("🎉 Lernplan komplett erledigt! Super gemacht!");
 }
 $("#planView").addEventListener("change", onTaskToggle);
 $("#todayTasks").addEventListener("change", onTaskToggle);
+$("#dayLearn").addEventListener("change", onTaskToggle);
 
 function renderPlan() {
   const t = activeTopic();
@@ -1302,12 +1305,408 @@ $("#gradesView").addEventListener("click", (e) => {
   save(); renderGrades();
 });
 
+
+// ---------- Startbildschirm ----------
+
+let mode = "launcher"; // "launcher" | "learn" | "planner"
+
+function setMode(m) {
+  mode = m;
+  $("#launcher").hidden = m !== "launcher";
+  $("#appLearn").hidden = m !== "learn";
+  $("#appPlanner").hidden = m !== "planner";
+  $("#topicSwitch").hidden = m !== "learn";
+  $("#modeTitle").hidden = m === "learn";
+  $("#modeTitle").textContent = m === "planner" ? "🗓️ Planer" : "";
+  document.body.dataset.mode = m;
+  if (m === "launcher") renderLauncher();
+  if (m === "planner") renderPlanner();
+  window.scrollTo({ top: 0 });
+}
+
+function renderLauncher() {
+  const h = new Date().getHours();
+  $("#launchHello").textContent = h < 11 ? "Guten Morgen! ☀️" : h < 17 ? "Hoi! 👋" : h < 22 ? "Guten Abend! 🌙" : "Noch wach? 🌙";
+  $("#launchDate").textContent = new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" });
+  const exams = state.topics.filter((x) => x.examDate && daysUntil(x.examDate) >= 0).sort((a, b) => a.examDate.localeCompare(b.examDate));
+  const t = activeTopic();
+  $("#launchLearnInfo").textContent = exams[0]
+    ? `Nächste Prüfung: ${exams[0].subject} ${daysUntil(exams[0].examDate) === 0 ? "heute" : `in ${daysUntil(exams[0].examDate)} Tagen`}`
+    : t ? `Aktuelles Thema: ${t.topic}` : "Noch kein Thema angelegt";
+  const today = todayISO();
+  const items = entriesFor(today);
+  const now = nowHM();
+  const next = items.find((e) => e.end > now);
+  $("#launchPlanInfo").textContent = items.length
+    ? `Heute ${items.length} ${items.length === 1 ? "Eintrag" : "Einträge"}${next ? ` · als Nächstes ${next.start} ${next.title}` : " · alles vorbei"}`
+    : "Heute noch nichts geplant";
+  const show = DESIGNS[state.design]?.pilot || state.pilotQuotes;
+  $("#launchQuote").hidden = !show;
+  if (show) {
+    const q = quoteOfDay(quoteOffset);
+    $("#launchQuote").innerHTML = `<div class="quote-icon" aria-hidden="true">${PLANE_SVG}</div><div class="quote-body"><div class="quote-label">Mission: Pilot werden</div><blockquote>„${esc(q.text)}“</blockquote>${q.by ? `<cite>– ${esc(q.by)}</cite>` : ""}</div>`;
+  }
+}
+
+$("#goLearn").addEventListener("click", () => setMode("learn"));
+$("#goPlanner").addEventListener("click", () => setMode("planner"));
+$("#homeBtn").addEventListener("click", () => setMode("launcher"));
+
+// ---------- Tages- & Wochenplaner ----------
+
+const CATS = {
+  schule: { name: "Schule", icon: "🏫" },
+  lernen: { name: "Lernen", icon: "📚" },
+  sport: { name: "Sport", icon: "⚽" },
+  freizeit: { name: "Freizeit", icon: "🎮" },
+  pflicht: { name: "Pflichten", icon: "🧹" },
+  pause: { name: "Essen & Pause", icon: "🍽️" },
+  termin: { name: "Termin", icon: "📌" },
+};
+const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
+let plannerDay = todayISO();
+let weekOffset = 0;
+let pplanProposal = null;
+
+function nowHM() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+function addDays(iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return isoDate(d);
+}
+function weekdayOf(iso) { return new Date(iso + "T00:00:00").getDay(); }
+function mondayOf(iso) { return addDays(iso, -((weekdayOf(iso) + 6) % 7)); }
+const validHM = (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v));
+
+// Einträge eines Tages: einmalige (date) und wöchentliche (weekday) – nach Startzeit sortiert.
+function entriesFor(iso) {
+  const dow = weekdayOf(iso);
+  return state.planner.entries
+    .filter((e) => e.date === iso || (e.weekday === dow && (!e.from || e.from <= iso)))
+    .sort((a, b) => a.start.localeCompare(b.start));
+}
+function examsOn(iso) { return state.topics.filter((t) => t.examDate === iso); }
+function learnTasksOn(iso) {
+  const out = [];
+  state.topics.forEach((topic) => topic.plan?.days.forEach((day, di) => { if (day.date === iso) out.push({ topic, day, di }); }));
+  return out;
+}
+
+function entryHtml(e, iso, compact = false) {
+  const cat = CATS[e.cat] || CATS.termin;
+  const done = !!e.done?.[iso];
+  const isNow = iso === todayISO() && e.start <= nowHM() && nowHM() < e.end;
+  if (compact) {
+    return `<li class="w-entry cat-${e.cat in CATS ? e.cat : "termin"} ${done ? "done" : ""}"><span class="w-time">${e.start}</span> ${esc(e.title)}</li>`;
+  }
+  return `<div class="entry cat-${e.cat in CATS ? e.cat : "termin"} ${done ? "done" : ""} ${isNow ? "now" : ""}">
+    <div class="e-time">${e.start}<span>${e.end}</span></div>
+    <label class="e-body"><input type="checkbox" data-done="${e.id}" ${done ? "checked" : ""}>
+      <span><span class="e-title">${esc(e.title)}</span>
+      <span class="e-meta">${cat.icon} ${cat.name}${e.weekday != null ? " · jede Woche" : ""}${isNow ? " · <strong>jetzt</strong>" : ""}</span></span></label>
+    <button class="del" data-del-entry="${e.id}" title="Eintrag löschen" aria-label="Eintrag löschen">✕</button>
+  </div>`;
+}
+
+function renderDay() {
+  const iso = plannerDay, today = todayISO();
+  const diff = daysUntil(iso);
+  $("#dayLabel").textContent = formatDate(iso, { weekday: "long", day: "numeric", month: "long" });
+  $("#daySub").textContent = diff === 0 ? "Heute" : diff === 1 ? "Morgen" : diff === -1 ? "Gestern" : diff > 0 ? `in ${diff} Tagen` : `vor ${-diff} Tagen`;
+  $("#dayToday").hidden = iso === today;
+  const items = entriesFor(iso);
+  const exams = examsOn(iso);
+  let html = exams.map((t) => `<div class="entry exam"><div class="e-time">📝</div><div class="e-body"><span><span class="e-title">Prüfung ${esc(t.subject)}: ${esc(t.topic)}</span><span class="e-meta">Viel Erfolg! 🍀</span></span></div></div>`).join("");
+  html += items.map((e) => entryHtml(e, iso)).join("");
+  if (!items.length && !exams.length) {
+    html = `<p class="empty">Noch nichts geplant. Füge unten einen Eintrag hinzu oder lass dir vom Coach einen Plan machen.</p>
+      <div class="row center"><button class="btn primary" id="dayAskCoach" type="button">🤖 Tag mit Coach planen</button></div>`;
+  }
+  $("#dayList").innerHTML = html;
+  $("#dayAskCoach")?.addEventListener("click", () => {
+    $("#pplanRange").value = iso === addDays(today, 1) ? "tomorrow" : "today";
+    switchPTab("coach");
+  });
+  const learn = learnTasksOn(iso);
+  $("#dayLearnCard").hidden = !learn.length;
+  $("#dayLearn").innerHTML = learn.map(({ topic, day, di }) => `<div style="margin-bottom:8px"><h3>${esc(topic.subject)} · ${esc(day.title)} <span class="pill">${day.minutes} min</span></h3>
+    ${day.tasks.map((task, ti) => taskHtml(topic, di, ti, task)).join("")}</div>`).join("");
+}
+
+function renderWeek() {
+  const monday = addDays(mondayOf(todayISO()), weekOffset * 7);
+  const sunday = addDays(monday, 6);
+  $("#weekLabel").textContent = `${formatDate(monday, { day: "numeric", month: "short" })} – ${formatDate(sunday, { day: "numeric", month: "short" })}`;
+  $("#weekSub").textContent = weekOffset === 0 ? "Diese Woche" : weekOffset === 1 ? "Nächste Woche" : weekOffset === -1 ? "Letzte Woche" : "";
+  const today = todayISO();
+  $("#weekView").innerHTML = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+    const iso = addDays(monday, i);
+    const items = entriesFor(iso), exams = examsOn(iso), learn = learnTasksOn(iso);
+    const list = exams.map((t) => `<li class="w-entry exam">📝 Prüfung ${esc(t.subject)}</li>`).join("")
+      + items.map((e) => entryHtml(e, iso, true)).join("")
+      + (learn.length ? `<li class="w-entry cat-lernen">📚 ${learn.length} Lerneinheit${learn.length > 1 ? "en" : ""}</li>` : "");
+    return `<button class="w-day ${iso === today ? "today" : ""}" data-day="${iso}" type="button">
+      <span class="w-head">${formatDate(iso, { weekday: "short" })} <span class="muted">${formatDate(iso, { day: "numeric", month: "numeric" })}</span></span>
+      <ul>${list || `<li class="muted w-free">frei</li>`}</ul></button>`;
+  }).join("");
+}
+
+function switchPTab(name) {
+  if (name === "home") return setMode("launcher");
+  document.querySelectorAll("#ptabs button").forEach((b) => b.classList.toggle("active", b.dataset.ptab === name));
+  document.querySelectorAll("#appPlanner .tab-panel").forEach((p) => p.classList.toggle("hidden", p.id !== `ptab-${name}`));
+  if (name === "week") renderWeek();
+  if (name === "day") renderDay();
+  if (name === "coach") renderPChat();
+  window.scrollTo({ top: 0 });
+}
+$("#ptabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-ptab]");
+  if (b) switchPTab(b.dataset.ptab);
+});
+
+function renderPlanner() {
+  $("#entryCat").innerHTML = Object.entries(CATS).map(([k, c]) => `<option value="${k}">${c.icon} ${c.name}</option>`).join("");
+  renderDay();
+  renderWeek();
+  renderPChat();
+}
+
+$("#dayPrev").addEventListener("click", () => { plannerDay = addDays(plannerDay, -1); renderDay(); });
+$("#dayNext").addEventListener("click", () => { plannerDay = addDays(plannerDay, 1); renderDay(); });
+$("#dayToday").addEventListener("click", () => { plannerDay = todayISO(); renderDay(); });
+$("#weekPrev").addEventListener("click", () => { weekOffset--; renderWeek(); });
+$("#weekNext").addEventListener("click", () => { weekOffset++; renderWeek(); });
+$("#weekView").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-day]");
+  if (b) { plannerDay = b.dataset.day; switchPTab("day"); }
+});
+
+$("#dayList").addEventListener("change", (e) => {
+  const cb = e.target.closest("[data-done]");
+  if (!cb) return;
+  const entry = state.planner.entries.find((x) => x.id === cb.dataset.done);
+  if (!entry) return;
+  entry.done = { ...(entry.done || {}) };
+  if (cb.checked) entry.done[plannerDay] = true;
+  else delete entry.done[plannerDay];
+  save(); renderDay();
+});
+$("#dayList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-del-entry]");
+  if (!b) return;
+  const entry = state.planner.entries.find((x) => x.id === b.dataset.delEntry);
+  if (!entry) return;
+  const msg = entry.weekday != null ? `„${entry.title}“ an allen ${WEEKDAYS[entry.weekday]}en löschen?` : `„${entry.title}“ löschen?`;
+  if (!(await ask(msg, "Löschen"))) return;
+  state.planner.entries = state.planner.entries.filter((x) => x.id !== entry.id);
+  save(); renderDay();
+});
+
+function newId() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+
+$("#entryForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = $("#entryTitle").value.trim(), start = $("#entryStart").value, end = $("#entryEnd").value;
+  if (!title || !validHM(start) || !validHM(end)) return toast("Bitte Titel und Zeiten ausfüllen.");
+  if (end <= start) return toast("„Bis“ muss nach „Von“ sein.");
+  const repeat = $("#entryRepeat").checked;
+  state.planner.entries.push({
+    id: newId(), title, start, end, cat: $("#entryCat").value,
+    date: repeat ? null : plannerDay, weekday: repeat ? weekdayOf(plannerDay) : null, from: repeat ? plannerDay : null, done: {},
+  });
+  save();
+  $("#entryTitle").value = "";
+  $("#entryRepeat").checked = false;
+  renderDay();
+  toast(repeat ? `Gespeichert, jeden ${WEEKDAYS[weekdayOf(plannerDay)]}.` : "Eintrag gespeichert.");
+});
+
+// --- Coach: Plan vorschlagen ---
+
+function plannerContext(dates) {
+  const lines = [];
+  dates.forEach((iso) => {
+    const parts = [];
+    entriesFor(iso).forEach((e) => parts.push(`${e.start}–${e.end} ${e.title} (${(CATS[e.cat] || CATS.termin).name})`));
+    examsOn(iso).forEach((t) => parts.push(`PRÜFUNG ${t.subject}: ${t.topic}`));
+    learnTasksOn(iso).forEach(({ topic, day }) => parts.push(`Lernplan ${topic.subject}: ${day.title} (${day.minutes} min): ${day.tasks.join("; ")}`));
+    lines.push(`${formatDate(iso, { weekday: "long" })} ${iso}: ${parts.length ? parts.join(" | ") : "noch nichts eingetragen"}`);
+  });
+  const exams = state.topics.filter((t) => t.examDate && daysUntil(t.examDate) >= 0).map((t) => `${t.examDate} ${t.subject}: ${t.topic}`);
+  return `Bereits eingetragen:\n${lines.join("\n")}\n\nAnstehende Prüfungen: ${exams.length ? exams.join("; ") : "keine"}`;
+}
+
+const PLANNER_RULES = `Du bist "Lumi", ein freundlicher Planungs-Coach für eine Schülerin oder einen Schüler (ca. 15 Jahre) an einem Schweizer Gymnasium.
+Du hilfst, Tage und Wochen realistisch zu planen: Schule, Lernen, Sport, Hobbys, Pflichten, Freizeit und genug Schlaf (8–10 Stunden).
+- Schreib auf Deutsch mit Schweizer Rechtschreibung ("ss" statt "ß"), kurz und motivierend.
+- Lernblöcke 25–50 Minuten mit kurzen Pausen; schwierige Fächer eher früher am Tag; vor Prüfungen rechtzeitig wiederholen.
+- Freizeit und Erholung sind wichtig und gehören in jeden Plan. Keine überfüllten Tage.
+- Bildschirme 30–60 Minuten vor dem Schlafen weglegen.`;
+
+$("#pplanForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const range = $("#pplanRange").value, today = todayISO();
+  const dates = range === "today" ? [today] : range === "tomorrow" ? [addDays(today, 1)] : [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(today, i));
+  const todo = $("#pplanTodo").value.trim();
+  const btn = $("#pplanBtn");
+  setBusy(btn, true, "Coach plant…");
+  try {
+    const data = await askJsonWith(PLANNER_RULES, `Plane ${range === "week" ? "die nächsten 7 Tage" : `den ${formatDate(dates[0], { weekday: "long", day: "numeric", month: "long" })}`}.
+
+Jetzt ist ${formatDate(today, { weekday: "long" })} ${today}, ${nowHM()} Uhr. Plane heute nichts vor dieser Uhrzeit.
+Aufstehen: ${$("#pplanWake").value}, Schlafen: ${$("#pplanSleep").value}
+Was ansteht (eigene Worte): ${todo || "nichts Besonderes angegeben"}
+
+${plannerContext(dates)}
+
+Regeln:
+- Die bereits eingetragenen Einträge sind fix: wiederhole sie nicht und plane nichts, was sich mit ihnen überschneidet.
+- Ergänze nur neue Blöcke: Lernen (inkl. Lernplan-Aufgaben und Prüfungsvorbereitung), Pausen, Essen, Pflichten, Freizeit.
+- Zeiten im Format HH:MM, zwischen Aufstehen und Schlafen.
+- "cat" ist genau einer von: schule, lernen, sport, freizeit, pflicht, pause, termin.
+
+Antworte nur mit JSON in genau dieser Form:
+{"summary": "1-2 Sätze", "entries": [{"date": "YYYY-MM-DD", "start": "HH:MM", "end": "HH:MM", "title": "kurz", "cat": "lernen"}], "tips": ["2-3 kurze Tipps"]}`);
+    const entries = (Array.isArray(data?.entries) ? data.entries : [])
+      .filter((x) => x && dates.includes(x.date) && validHM(x.start) && validHM(x.end) && x.end > x.start && x.title)
+      .map((x) => ({ date: x.date, start: x.start, end: x.end, title: String(x.title).slice(0, 80), cat: x.cat in CATS ? x.cat : "termin" }))
+      .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    if (!entries.length) throw new Error("Der Coach hat keinen brauchbaren Plan geschickt. Bitte nochmals versuchen.");
+    pplanProposal = { summary: String(data.summary || ""), tips: Array.isArray(data.tips) ? data.tips.map(String) : [], entries, multi: dates.length > 1 };
+    renderProposal();
+  } catch (err) {
+    toast("⚠️ " + err.message);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+function renderProposal() {
+  const p = pplanProposal, el = $("#pplanResult");
+  if (!p) { el.innerHTML = ""; return; }
+  let lastDate = "";
+  el.innerHTML = `<div class="card proposal">
+    <h2>Vorschlag vom Coach</h2>
+    ${p.summary ? `<p>${esc(p.summary)}</p>` : ""}
+    <div class="proposal-list">${p.entries.map((x, i) => {
+      const head = p.multi && x.date !== lastDate ? `<h3 class="p-day">${formatDate(x.date, { weekday: "long", day: "numeric", month: "long" })}</h3>` : "";
+      lastDate = x.date;
+      return `${head}<label class="entry cat-${x.cat}"><div class="e-time">${x.start}<span>${x.end}</span></div>
+        <span class="e-body"><input type="checkbox" data-pi="${i}" checked><span><span class="e-title">${esc(x.title)}</span>
+        <span class="e-meta">${CATS[x.cat].icon} ${CATS[x.cat].name}</span></span></span></label>`;
+    }).join("")}</div>
+    ${p.tips.length ? `<ul class="tips">${p.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+    <div class="row" style="justify-content:flex-end; margin-top:10px">
+      <button class="btn ghost" id="pDiscard" type="button">Verwerfen</button>
+      <button class="btn primary" id="pAccept" type="button">✅ Ausgewählte übernehmen</button>
+    </div></div>`;
+  $("#pDiscard").addEventListener("click", () => { pplanProposal = null; renderProposal(); });
+  $("#pAccept").addEventListener("click", () => {
+    const chosen = [...el.querySelectorAll("[data-pi]")].filter((c) => c.checked).map((c) => p.entries[Number(c.dataset.pi)]);
+    chosen.forEach((x) => state.planner.entries.push({ id: newId(), ...x, weekday: null, from: null, done: {} }));
+    save();
+    pplanProposal = null;
+    renderProposal();
+    plannerDay = chosen[0]?.date || plannerDay;
+    toast(`✅ ${chosen.length} Einträge im Planer gespeichert.`);
+    switchPTab(p.multi ? "week" : "day");
+  });
+}
+
+async function askJsonWith(rules, prompt) {
+  const sample = await getSample();
+  if (!sample) throw new Error("Der Coach funktioniert nur, wenn du die App auf claude.ai öffnest.");
+  try {
+    return await sample.json(rules + "\n\n" + prompt, { cache: false });
+  } catch (e) {
+    throw new Error(sampleErrorText(e));
+  }
+}
+
+// --- Coach: Chat zur Planung ---
+
+let pchatBusy = false, pchatCtl = null;
+
+function renderPChat() {
+  const chat = $("#pchat");
+  const msgs = state.planner.chat;
+  chat.innerHTML = msgs.length ? msgs.map((m) => m.role === "user"
+    ? `<div class="msg user">${esc(m.content)}</div>`
+    : `<div class="msg assistant">${md(m.content)}</div>`).join("")
+    : `<div class="empty">🤖 Frag mich alles zur Planung: wie du alles unter einen Hut bringst, wann du am besten lernst oder wie du dranbleibst.</div>`;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendPChat(text) {
+  if (pchatBusy || !text.trim()) return;
+  pchatBusy = true;
+  $("#psendBtn").disabled = true;
+  const msgs = state.planner.chat;
+  msgs.push({ role: "user", content: text.trim() });
+  save(); renderPChat();
+  const chat = $("#pchat");
+  const bubble = document.createElement("div");
+  bubble.className = "msg assistant typing";
+  chat.appendChild(bubble);
+  chat.scrollTop = chat.scrollHeight;
+  let answer = "";
+  pchatCtl = new AbortController();
+  $("#pstopBtn").hidden = false;
+  try {
+    const sample = await getSample();
+    if (!sample) throw { code: "unavailable" };
+    const today = todayISO();
+    const ctx = plannerContext([0, 1, 2, 3, 4, 5, 6].map((i) => addDays(today, i)));
+    const rules = `${PLANNER_RULES}\n\nJetzt ist ${formatDate(today, { weekday: "long" })} ${today}, ${nowHM()} Uhr.\n${ctx}\n\nDas Gespräch folgt.`;
+    const history = msgs.slice(-30);
+    while (history.length && history[0].role !== "user") history.shift();
+    const { text: reply } = await sample([{ role: "user", content: rules }, ...history], {
+      cache: false, signal: pchatCtl.signal,
+      onText: ({ text: soFar }) => { answer = soFar; bubble.innerHTML = md(answer); chat.scrollTop = chat.scrollHeight; },
+    });
+    answer = reply;
+  } catch (e) {
+    if (e?.code === "unavailable") answer = "⚠️ Der Coach funktioniert nur, wenn du die App auf claude.ai öffnest.";
+    else if (e?.code === "refused") answer = "⚠️ " + sampleErrorText(e);
+    else { answer = e?.text || answer; if (e?.code !== "cancelled") answer += `\n\n⚠️ ${sampleErrorText(e)}`; }
+  }
+  $("#pstopBtn").hidden = true;
+  if (answer.trim()) msgs.push({ role: "assistant", content: answer.trim() });
+  else msgs.pop();
+  save();
+  pchatBusy = false;
+  $("#psendBtn").disabled = false;
+  renderPChat();
+}
+
+$("#pchatForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = $("#pchatInput").value;
+  $("#pchatInput").value = "";
+  sendPChat(text);
+});
+$("#pchatInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#pchatForm").requestSubmit(); }
+});
+$("#pquick").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) sendPChat(b.textContent); });
+$("#pstopBtn").addEventListener("click", () => pchatCtl?.abort());
+$("#pclearChat").addEventListener("click", async () => {
+  if (state.planner.chat.length && await ask("Chat mit dem Planungs-Coach löschen?", "Löschen")) { state.planner.chat = []; save(); renderPChat(); }
+});
+
 // ---------- Start ----------
 
 function renderStreak() { $("#streak").textContent = `🔥 ${streakCount()}`; }
 
 function renderAll() {
   applyDesign();
+  if (mode === "launcher") renderLauncher();
+  if (mode === "planner") renderPlanner();
   renderSettings();
   renderMusic();
   renderTopicSwitch();
@@ -1327,4 +1726,5 @@ function renderAll() {
 applyTheme();
 renderSubjects();
 renderAll();
+setMode("launcher");
 connectCloud();
